@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class EmparejamientoPorNivel implements EstrategiaEmparejamiento {
 
     @Override
-    public List<UsuarioDTO> emparejar(PartidoDTO partido, List<UsuarioDTO> jugadores) {
+    public List<UsuarioDTO> emparejar(Partido partido, List<UsuarioDTO> jugadores) {
         Nivel nivelRequerido = partido.getNivel();
 
         return jugadores.stream()
