@@ -13,26 +13,16 @@ import java.util.stream.Collectors;
 public class EmparejamientoPorNivel implements EstrategiaEmparejamiento {
 
     @Override
-    public List<UsuarioDTO> emparejar(Partido partido, List<UsuarioDTO> jugadores) {
+    public List<UsuarioDTO> emparejar(PartidoDTO partido, List<UsuarioDTO> jugadores) {
         Nivel nivelRequerido = partido.getNivel();
 
-        List<UsuarioDTO> jugadoresCoincidentes = jugadores.stream()
+        return jugadores.stream()
                 .filter(jugador -> {
                     Nivel nivelJugador = jugador.getNivel();
-                    return nivelJugador != null && nivelCompatible(nivelJugador, nivelRequerido);
+                    return nivelJugador != null && nivelJugador == nivelRequerido;
                 })
-                .sorted(Comparator.comparingInt(j -> diferenciaNivel(j.getNivel(), nivelRequerido)))
                 .limit(partido.getCantidadJugadores())
                 .collect(Collectors.toList());
-
-        return jugadoresCoincidentes;
-    }
-
-    private boolean nivelCompatible(Nivel jugador, Nivel requerido) {
-        return jugador == requerido;
-    }
-    private int diferenciaNivel(Nivel nivelJugador, Nivel nivelRequerido) {
-        return Math.abs(nivelJugador.ordinal() - nivelRequerido.ordinal());
     }
 
     @Override
