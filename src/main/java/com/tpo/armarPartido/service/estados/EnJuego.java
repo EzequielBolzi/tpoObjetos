@@ -33,14 +33,17 @@ public class EnJuego implements EstadoPartido {
 
 	@Override
 	public void finalizar(Partido partido) {
-		Date inicio = partido.getHorario();
-		long duracionMinutos = partido.getDuracion();
-		long duracionMillis = duracionMinutos * 60L * 1000L;
-		Date ahora = new Date();
-		Date finEstimado = new Date(inicio.getTime() + duracionMillis);
-		if (ahora.after(finEstimado)) {
-		    partido.cambiarEstado(new Finalizado());
-		 }
+	    Date ahora = new Date();
+	    long inicioMillis = partido.getHorario().getTime();
+	    long duracionMillis = partido.getDuracion() * 60L * 1000L;
+	    long finEstimadoMillis = inicioMillis + duracionMillis;
+
+	    if (ahora.getTime() >= finEstimadoMillis) {
+	        partido.cambiarEstado(new Finalizado());
+	        System.out.println("El partido ha finalizado.");
+	    } else {
+	        System.out.println("El partido aún no ha finalizado. Final estimado: " + new Date(finEstimadoMillis));
+	        }
 	}
 
 }
