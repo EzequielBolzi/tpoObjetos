@@ -83,7 +83,7 @@ public class Partido {
         	jugadoresParticipan.add(jugador);
         	System.out.println("Se agrego el jugador " + jugador + " con exito. ");
     	}
-    	System.out.println("El equipo esta completo.");
+    	else {System.out.println("El equipo esta completo.");}
     }
 
     public Nivel getNivel() {

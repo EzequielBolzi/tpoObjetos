@@ -1,5 +1,6 @@
 package com.tpo.armarPartido.service.estados;
 
+import com.tpo.armarPartido.dto.UsuarioDTO;
 import com.tpo.armarPartido.model.*;
 
 public class PartidoArmado implements EstadoPartido {
@@ -19,10 +20,8 @@ public class PartidoArmado implements EstadoPartido {
 
     @Override
     public void confirmar(Partido partido) {
-        if (partido.getJugadoresParticipan().contains(Usuario)) {
-        	confirmaciones++;
-        }
-    	
+        // Debemos validar antes que el usuario este en este partido. 
+        confirmaciones++;
         if (confirmaciones >= partido.getJugadoresParticipan().size()) {
             partido.cambiarEstado(new Confirmacion());
         }
@@ -30,12 +29,12 @@ public class PartidoArmado implements EstadoPartido {
 
     @Override
     public void comenzar(Partido partido) {
-        // No aplica. Solo se puede comenzar desde el estado Confirmacion.
+        // No aplica. 
     }
 
     @Override
     public void finalizar(Partido partido) {
-        // No aplica. Solo se puede finalizar desde EnJuego.
+        // No aplica.
     }
 
     public String getMensaje() {

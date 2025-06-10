@@ -29,11 +29,17 @@ public class Confirmacion implements EstadoPartido {
 
 	@Override
 	public void comenzar(Partido partido) {
-		Date ahora = new Date();
-		if (ahora.after(partido.getHorario())) {
-		    partido.cambiarEstado(new EnJuego());
-		}
-		
+	    Date ahora = new Date();
+	    long horarioPartido = partido.getHorario().getTime();
+	    long ahoraMillis = ahora.getTime();
+	    long diezMinutos = 600000;
+
+	    if (ahoraMillis >= (horarioPartido - diezMinutos) && ahoraMillis <= (horarioPartido + diezMinutos)) {
+	        partido.cambiarEstado(new EnJuego());
+	        System.out.println("El partido ha comenzado.");
+	    } else {
+	        System.out.println("No es el horario para comenzar el partido. Horario programado: " + partido.getHorario());
+	    }
 	}
 
 	@Override
@@ -41,5 +47,5 @@ public class Confirmacion implements EstadoPartido {
 		// no aplica
 		
 	}
-
+	
 }
