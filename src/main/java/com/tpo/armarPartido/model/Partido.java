@@ -3,6 +3,7 @@ package com.tpo.armarPartido.model;
 import com.tpo.armarPartido.enums.Deporte;
 import com.tpo.armarPartido.enums.Nivel;
 import com.tpo.armarPartido.service.EstrategiaEmparejamiento;
+import com.tpo.armarPartido.service.estados.*;
 import com.tpo.armarPartido.dto.UsuarioDTO;
 import lombok.*;
 
@@ -37,6 +38,7 @@ public class Partido {
         notificarObservadores();
 
     }
+    
     public void emparejarJugadores() {
         if (emparejamiento == null) {
             throw new IllegalStateException("No se ha definido una estrategia de emparejamiento");
@@ -75,5 +77,36 @@ public class Partido {
                 System.err.printf("Error al notificar observador: %s%n", e.getMessage());
             }
         }
+      }
+    
+    public Nivel getNivel() {
+		return this.nivel;
+		}
+    
+    public int getCantidadJugadores() {
+    	return this.cantidadJugadores;
     }
+    
+    public Ubicacion getUbicacion() {
+    	return this.ubicacion;
+    			
     }
+    
+    public List<UsuarioDTO> getJugadoresParticipan() {
+    	return this.jugadoresParticipan;
+    }
+    
+    public Date getHorario() {
+    	return this.horario;
+    }
+    public int getDuracion() {
+    	return this.duracion;
+    }
+    
+}
+
+	
+	
+
+	
+	

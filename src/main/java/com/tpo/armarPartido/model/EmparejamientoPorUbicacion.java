@@ -3,6 +3,7 @@ package com.tpo.armarPartido.model;
 import com.tpo.armarPartido.service.EstrategiaEmparejamiento;
 import com.tpo.armarPartido.dto.UsuarioDTO;
 import org.springframework.stereotype.Component;
+import com.tpo.armarPartido.dto.UsuarioDTO;
 
 import java.util.Comparator;
 import java.util.List;
@@ -15,20 +16,21 @@ public class EmparejamientoPorUbicacion implements EstrategiaEmparejamiento {
     private static final int TIERRA_RADIO_KM = 6378;
 
     @Override
-    public List<UsuarioDTO> emparejar(Partido partido, List<UsuarioDTO> jugadores) {
-        Ubicacion ubicacionPartido = partido.getUbicacion();
+
+    	public List<UsuarioDTO> emparejar(Partido partido, List<UsuarioDTO> jugadores) {
+    	Ubicacion ubicacionPartido = partido.getUbicacion();
 
 
-        return jugadores.stream()
-                .filter(jugador -> {
-                    Ubicacion ubicacionJugador = jugador.getUbicacion();
-                    if (ubicacionJugador == null) return false;
+         return jugadores.stream()
+              .filter(jugador -> {
+                    Ubicacion ubicacionJugador = null;
+                   if (ubicacionJugador == null) return false;
 
                     double distancia = calcularDistancia(ubicacionPartido, ubicacionJugador);
                     return distancia <= RADIO_MAXIMO_KM;
                 })
                 .sorted(Comparator.comparingDouble(jugador ->
-                        calcularDistancia(ubicacionPartido, jugador.getUbicacion())))
+                       calcularDistancia(ubicacionPartido, jugador.getUbicacion())))
                 .limit(partido.getCantidadJugadores())
                 .collect(Collectors.toList());
     }
