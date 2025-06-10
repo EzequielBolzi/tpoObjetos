@@ -11,6 +11,4 @@ public class Comentario {
 		this.comentario = comentario;
 	}
 	
-	
-
 }

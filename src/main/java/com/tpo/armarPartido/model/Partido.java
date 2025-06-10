@@ -111,8 +111,16 @@ public class Partido {
     	return this.duracion;
     }
     
+    public void comentar(UsuarioDTO jugador, String mensaje) {
+        if (this.estado instanceof Finalizado) {
+            Comentario nuevoComentario = new Comentario(jugador, mensaje);
+            ((Finalizado) this.estado).agregarComentario(nuevoComentario);
+        } else {
+            System.out.println("No se puede comentar. El partido aún no finalizó.");
+        }
+    	
+    }
 
-    
 }
 
 	

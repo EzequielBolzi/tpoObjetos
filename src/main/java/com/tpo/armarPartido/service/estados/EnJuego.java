@@ -9,25 +9,25 @@ public class EnJuego implements EstadoPartido {
 
 	@Override
 	public void cancelar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica.
 		
 	}
 
 	@Override
 	public void armar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica.
 		
 	}
 
 	@Override
 	public void confirmar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica.
 		
 	}
 
 	@Override
 	public void comenzar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica.
 		
 	}
 

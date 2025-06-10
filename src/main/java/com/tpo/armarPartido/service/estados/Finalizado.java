@@ -7,36 +7,40 @@ import com.tpo.armarPartido.model.Comentario;
 public class Finalizado implements EstadoPartido {
 	
 	private static final String mensaje = "El partido ya finalizo!";
-	private List<Comentario> Comentarios;
+	private List<Comentario> comentarios;
 
 	@Override
 	public void cancelar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica.
 		
 	}
 
 	@Override
 	public void armar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica.
 		
 	}
 
 	@Override
 	public void confirmar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica.
 		
 	}
 
 	@Override
 	public void comenzar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica.
 		
 	}
 
 	@Override
 	public void finalizar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica.
 		
+	}
+	
+	public void agregarComentario(Comentario comentario) {
+		comentarios.add(comentario);
 	}
 
 }
