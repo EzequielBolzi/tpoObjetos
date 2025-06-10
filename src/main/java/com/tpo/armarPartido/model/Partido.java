@@ -33,8 +33,6 @@ public class Partido {
     public void cambiarEstado(EstadoPartido nuevo) {
         EstadoPartido estadoAnterior = this.estado;
         this.estado = nuevo;
-
-        // Notificar cambio de estado
         notificarObservadores();
 
     }
@@ -79,6 +77,15 @@ public class Partido {
         }
       }
     
+    public void agregarJugador(UsuarioDTO jugador) {
+    	
+    	if (this.cantidadJugadores >= this.jugadoresParticipan.size()) {
+        	jugadoresParticipan.add(jugador);
+        	System.out.println("Se agrego el jugador " + jugador + " con exito. ");
+    	}
+    	System.out.println("El equipo esta completo.");
+    }
+
     public Nivel getNivel() {
 		return this.nivel;
 		}
@@ -99,9 +106,12 @@ public class Partido {
     public Date getHorario() {
     	return this.horario;
     }
+    
     public int getDuracion() {
     	return this.duracion;
     }
+    
+
     
 }
 

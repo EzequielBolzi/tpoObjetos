@@ -6,31 +6,31 @@ public class Cancelado implements EstadoPartido {
 
 	@Override
 	public void cancelar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica a este estado
 		
 	}
 
 	@Override
 	public void armar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica a este estado
 		
 	}
 
 	@Override
 	public void confirmar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica a este estado
 		
 	}
 
 	@Override
 	public void comenzar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica a este estado
 		
 	}
 
 	@Override
 	public void finalizar(Partido partido) {
-		// TODO Auto-generated method stub
+		// No aplica a este estado
 		
 	}
 
