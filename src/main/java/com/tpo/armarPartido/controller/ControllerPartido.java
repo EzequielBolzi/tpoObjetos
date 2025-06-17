@@ -12,6 +12,7 @@ import com.tpo.armarPartido.dto.UsuarioDTO;
 import com.tpo.armarPartido.dto.DTOMapper;
 import com.tpo.armarPartido.enums.*;
 import com.tpo.armarPartido.model.*;
+import com.tpo.armarPartido.repository.UsuarioRepository;
 import com.tpo.armarPartido.service.*;
 import com.tpo.armarPartido.service.estados.*;
 import utils.*;
@@ -24,12 +25,14 @@ public class ControllerPartido {
     private final PartidoRepository partidoRepository;
     private final ComentarioRepository comentarioRepository;
     private final NotificacionRepository notificacionRepository;
+    private final UsuarioRepository usuarioRepository;
     private AdapterMail adapterMail;
     private NotificacionService notificacionService;
     private NotificadorMail notificadorMail;
     private NotificadorSMS notificadorSMS;
 
     public ControllerPartido() {
+        this.usuarioRepository = new UsuarioRepository();
         this.partidoRepository = new PartidoRepository();
         this.comentarioRepository = new ComentarioRepository();
         this.notificacionRepository = new NotificacionRepository();
@@ -105,14 +108,13 @@ public class ControllerPartido {
     }
     
     // Metodos de estado
-    
-    public void armarPartido(Long id) {
+        public void armarPartido(Long id) {
         Partido partido = getPartidoPorID(id);
         if (partido != null && partido.getEmparejamiento() != null) {
             // Restaura los observadores después de cargar desde la base de datos
             partido.resetObservers(java.util.Collections.singletonList(notificadorMail));
-            List<Usuario> posiblesJugadores = partido.getJugadoresParticipan();
-            List<Usuario> seleccionados = partido.getEmparejamiento().emparejar(partido, posiblesJugadores);
+            List<Usuario> todosLosUsuarios = usuarioRepository.findAll();
+            List<Usuario> seleccionados = partido.getEmparejamiento().emparejar(partido, todosLosUsuarios);
             partido.setJugadoresParticipan(seleccionados);
             if (partido.getJugadoresParticipan().size() >= partido.getCantidadJugadores()) {
                 partido.getEstado().armar(partido);
@@ -142,7 +144,7 @@ public class ControllerPartido {
             System.out.println("No se pudo armar el partido: partido o emparejamiento nulo para id: " + id);
         }
     }
-    
+
     public void confirmarPartido(Long id, Usuario jugador) {
         Partido partido = getPartidoPorID(id);
         if (partido != null) {

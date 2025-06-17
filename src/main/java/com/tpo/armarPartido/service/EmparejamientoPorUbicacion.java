@@ -6,6 +6,7 @@ import com.tpo.armarPartido.model.Usuario;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class EmparejamientoPorUbicacion implements EstrategiaEmparejamiento {
     @Override
@@ -17,14 +18,31 @@ public class EmparejamientoPorUbicacion implements EstrategiaEmparejamiento {
     public List<Usuario> emparejar(Partido partido, List<Usuario> jugadores) {
         Ubicacion ubicacionCentral = partido.getUbicacion();
         List<Usuario> seleccionados = new ArrayList<>();
-        if (jugadores != null && !jugadores.isEmpty()) {
-            seleccionados.add(jugadores.get(0)); 
-            jugadores.stream()
-                .filter(j -> !j.equals(jugadores.get(0)))
-                .sorted(Comparator.comparingDouble(j -> ubicacionCentral.distanciaCuadradoA(j.getUbicacion())))
-                .forEach(seleccionados::add);
+
+        // Obtener los que ya están en el partido
+        List<Usuario> yaParticipan = partido.getJugadoresParticipan();
+        if (yaParticipan != null) {
+            seleccionados.addAll(yaParticipan);
         }
+
+        // Calcular cuántos jugadores más necesitamos
+        int jugadoresNecesarios = partido.getCantidadJugadores() - seleccionados.size();
+        if (jugadoresNecesarios <= 0) {
+            return seleccionados.subList(0, partido.getCantidadJugadores());
+        }
+
+        // Filtrar jugadores disponibles que no estén ya agregados
+        List<Usuario> jugadoresDisponibles = jugadores.stream()
+                .filter(jugador -> !seleccionados.contains(jugador))
+                .sorted(Comparator.comparingDouble(j -> ubicacionCentral.distanciaCuadradoA(j.getUbicacion())))
+                .limit(jugadoresNecesarios)
+                .collect(Collectors.toList());
+
+        // Agregar los más cercanos
+        seleccionados.addAll(jugadoresDisponibles);
+
         return seleccionados;
     }
 }
+
 

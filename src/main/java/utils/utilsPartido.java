@@ -50,7 +50,7 @@ public class utilsPartido {
             if (estrategia != null) {
                 // Si EstrategiaEmparejamiento tiene toString descriptivo, úsalo; sino mostramos su clase
                 String desc = estrategia.toString();
-                if (desc == null || desc.isBlank() || desc.contains("@")) {
+                if (desc == null || desc.isEmpty() || desc.contains("@")) {
                     desc = estrategia.getClass().getSimpleName();
                 }
                 System.out.println("  EstrategiaEmparejamiento: " + desc);
