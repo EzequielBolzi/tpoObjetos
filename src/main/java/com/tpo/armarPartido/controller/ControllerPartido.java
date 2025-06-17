@@ -17,16 +17,18 @@ import utils.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.tpo.armarPartido.repository.PartidoRepository;
 
 @RestController
 @RequestMapping("/api/partidos")
 public class ControllerPartido {
 	
+    @Autowired
+    private PartidoRepository partidoRepository;
     private static ControllerPartido instancia;
-    private List<Partido> partidos;
 
     private ControllerPartido() {
-    	partidos = new ArrayList<>();
     }
 
     public static ControllerPartido getInstancia() {
@@ -46,18 +48,17 @@ public class ControllerPartido {
     	List<iObserver> observadores = new ArrayList<iObserver>();
     	observadores.add(notificador);
     	Partido nuevo = new Partido(deporte, cantidadJugadores, duracion, ubicacion, horario, estadoInicial, emparejamiento, listaJugadoresParticipan, nivel, observadores);
-    	partidos.add(nuevo);
+    	partidoRepository.save(nuevo);
     	System.out.println(" + Se creo un nuevo partido de " + nuevo.getDeporte());
     }
     
     public void buscarPartidosPorNivel(Nivel nivel) {
         System.out.println("Buscando partidos con nivel: " + nivel);
+        List<Partido> partidos = partidoRepository.findAll();
         boolean encontrados = false;
-
-        for (int i = 0; i < partidos.size(); i++) {
-            Partido partido = partidos.get(i);
+        for (Partido partido : partidos) {
             if (partido.getNivel().equals(nivel)) {
-                System.out.println("ID Partido: " + i);
+                System.out.println("ID Partido: " + partido.getId());
                 System.out.println(" - Deporte: " + partido.getDeporte());
                 System.out.println(" - Nivel: " + partido.getNivel());
                 System.out.println(" - Ubicación: " + partido.getUbicacion());
@@ -69,7 +70,6 @@ public class ControllerPartido {
                 encontrados = true;
             }
         }
-
         if (!encontrados) {
             System.out.println("No se encontraron partidos con el nivel: " + nivel);
         }
@@ -80,12 +80,9 @@ public class ControllerPartido {
     		System.err.println("La ubicacion esta vacia.");
     	}
     	
-    	List<Partido> partidosEnEstadoNecesitamosJugadores = new ArrayList<Partido>();
-    	for(Partido partido:partidos) {
-    		if(partido.getEstado().toString().equals("NecesitamosJugadores")) {
-    			partidosEnEstadoNecesitamosJugadores.add(partido);
-    		}
-    	}
+    	List<Partido> partidosEnEstadoNecesitamosJugadores = partidoRepository.findAll().stream()
+            .filter(p -> p.getEstado().toString().equals("NecesitamosJugadores"))
+            .collect(Collectors.toList());
     	
     	buscarMasCercanos(partidosEnEstadoNecesitamosJugadores, ubicacionCentral, cantidadPartidos);
     }
@@ -107,34 +104,37 @@ public class ControllerPartido {
             return partidosCercanos;
     }
     
-    public Partido getPartidoPorID(int id) {
-    	return partidos.get(id);
-
+    public Partido getPartidoPorID(String id) {
+    	return partidoRepository.findById(id).orElse(null);
     }
     
-    public void agregarJugadorAPartido(int idPartido, Usuario jugadorNuevo) {
+    public void agregarJugadorAPartido(String idPartido, Usuario jugadorNuevo) {
     	Partido partido = getPartidoPorID(idPartido);
-    	partido.agregarJugador(jugadorNuevo);
-    	System.out.println("Se agrego jugador "+jugadorNuevo+" al partido: "+partido.getDeporte()+" del nivel: "+partido.getNivel());
-    	System.out.println("-----------------------------------");
-    	
+    	if (partido != null) {
+    		partido.agregarJugador(jugadorNuevo);
+    		partidoRepository.save(partido);
+    		System.out.println("Se agrego jugador "+jugadorNuevo+" al partido: "+partido.getDeporte()+" del nivel: "+partido.getNivel());
+    		System.out.println("-----------------------------------");
+    	}
     }
     
-    public void printEstadoPartidoID (int id) {
-    	System.out.println(partidos.get(id).getEstado()); 
+    public void printEstadoPartidoID (String id) {
+    	Partido partido = getPartidoPorID(id);
+    	if (partido != null) {
+    		System.out.println(partido.getEstado()); 
+    	}
     }
     
-    public Partido getPartidoID(int id) {
-    	return partidos.get(id);
+    public Partido getPartidoID(String id) {
+    	return getPartidoPorID(id);
     }
     
     // Metodos de estado
     
-    public void armarPartido(int id) {
-        Partido partido = partidos.get(id);
-        if (partido.getEmparejamiento() != null) {
+    public void armarPartido(String id) {
+        Partido partido = getPartidoPorID(id);
+        if (partido != null && partido.getEmparejamiento() != null) {
             System.out.println("🔄 Armando partido segun estrategia de emparejamiento...");
-            // Usar solo los jugadores agregados al partido
             List<Usuario> posiblesJugadores = partido.getJugadoresParticipan();
             List<Usuario> seleccionados = partido.getEmparejamiento().emparejar(partido, posiblesJugadores);
             partido.setJugadoresParticipan(seleccionados);
@@ -144,86 +144,94 @@ public class ControllerPartido {
             } else {
                 System.out.println("⚠️ No se pudo armar el partido. Jugadores seleccionados: " + seleccionados.size() + " --> falta de Jugadores Online");
             }
+            partidoRepository.save(partido);
             System.out.println("-----------------------------------");
         }
     }
     
-    public void confirmarPartido(int id, Usuario jugador) {
-    	Partido partido = partidos.get(id);
-    	EstadoPartido estadoActual = partido.getEstado();
-    	if(partido.esParticipante(jugador)) {
-	    	estadoActual.confirmar(partido);
-	    	estadoActual.getMessage(partido);
-	    	
+    public void confirmarPartido(String id, Usuario jugador) {
+    	Partido partido = getPartidoPorID(id);
+    	if (partido != null) {
+    		EstadoPartido estadoActual = partido.getEstado();
+    		if(partido.esParticipante(jugador)) {
+	    		estadoActual.confirmar(partido);
+	    		estadoActual.getMessage(partido);
+	    		partidoRepository.save(partido);
+	    	}
+	    	else {
+	    		System.err.println("El " + jugador.getNombre()+ " que intenta confirmar no es parte del Partido");
+			}
     	}
-    	else {
-    		System.err.println("El " + jugador.getNombre()+ " que intenta confirmar no es parte del Partido");
-		}
-    	
     }
     
-    public void comenzarPartido(int id, Usuario jugador, boolean overrideHorario) {
-        Partido partido = partidos.get(id);
-        EstadoPartido estadoActual = partido.getEstado();
-        if (partido.esCreador(jugador)) {
-            if (overrideHorario && estadoActual instanceof com.tpo.armarPartido.service.estados.Confirmacion) {
-                partido.cambiarEstado(new com.tpo.armarPartido.service.estados.EnJuego());
-                System.out.println("El partido ha comenzado (override horario).");
+    public void comenzarPartido(String id, Usuario jugador, boolean overrideHorario) {
+        Partido partido = getPartidoPorID(id);
+        if (partido != null) {
+            EstadoPartido estadoActual = partido.getEstado();
+            if (partido.esCreador(jugador)) {
+                if (overrideHorario && estadoActual instanceof com.tpo.armarPartido.service.estados.Confirmacion) {
+                    partido.cambiarEstado(new com.tpo.armarPartido.service.estados.EnJuego());
+                    System.out.println("El partido ha comenzado (override horario).");
+                } else {
+                    estadoActual.comenzar(partido);
+                    estadoActual.getMessage(partido);
+                }
+                partidoRepository.save(partido);
             } else {
-                estadoActual.comenzar(partido);
-                estadoActual.getMessage(partido);
+                System.err.println("El " + jugador.getNombre() + " que intenta comenzar no es creador del partido");
             }
-        } else {
-            System.err.println("El " + jugador.getNombre() + " que intenta comenzar no es creador del partido");
         }
     }
     
-    public void finalizarPartido(int id, Usuario jugador, boolean overrideHorario) {
-        Partido partido = partidos.get(id);
-        EstadoPartido estadoActual = partido.getEstado();
-        if (partido.esCreador(jugador)) {
-            if (overrideHorario && estadoActual instanceof com.tpo.armarPartido.service.estados.EnJuego) {
-                partido.cambiarEstado(new com.tpo.armarPartido.service.estados.Finalizado());
-                System.out.println("El partido ha finalizado (override horario).");
+    public void finalizarPartido(String id, Usuario jugador, boolean overrideHorario) {
+        Partido partido = getPartidoPorID(id);
+        if (partido != null) {
+            EstadoPartido estadoActual = partido.getEstado();
+            if (partido.esCreador(jugador)) {
+                if (overrideHorario && estadoActual instanceof com.tpo.armarPartido.service.estados.EnJuego) {
+                    partido.cambiarEstado(new com.tpo.armarPartido.service.estados.Finalizado());
+                    System.out.println("El partido ha finalizado (override horario).");
+                } else {
+                    estadoActual.finalizar(partido);
+                    estadoActual.getMessage(partido);
+                }
+                partidoRepository.save(partido);
             } else {
-                estadoActual.finalizar(partido);
-                estadoActual.getMessage(partido);
+                System.err.println("El " + jugador.getNombre() + " que intenta comenzar no es creador del partido");
             }
-        } else {
-            System.err.println("El " + jugador.getNombre() + " que intenta comenzar no es creador del partido");
         }
     }
 
     // Overloads for backward compatibility
-    public void comenzarPartido(int id, Usuario jugador) {
+    public void comenzarPartido(String id, Usuario jugador) {
         comenzarPartido(id, jugador, false);
     }
 
-    public void finalizarPartido(int id, Usuario jugador) {
+    public void finalizarPartido(String id, Usuario jugador) {
         finalizarPartido(id, jugador, false);
     }
 
     public List<PartidoDTO> getPartidosDTO() {
-        return partidos.stream().map(DTOMapper::toPartidoDTO).collect(Collectors.toList());
+        return partidoRepository.findAll().stream().map(DTOMapper::toPartidoDTO).collect(Collectors.toList());
     }
 
-    public PartidoDTO getPartidoDTOPorID(int id) {
-        if (id >= 0 && id < partidos.size()) {
-            return DTOMapper.toPartidoDTO(partidos.get(id));
-        }
-        return null;
+    public PartidoDTO getPartidoDTOPorID(String id) {
+        Partido partido = getPartidoPorID(id);
+        return partido != null ? DTOMapper.toPartidoDTO(partido) : null;
     }
     
-    public void comentarPartido(int id, Usuario jugador, String comentario) {
-    	Partido partido = partidos.get(id);
-    	EstadoPartido estadoActual = partido.getEstado();
-    	if(estadoActual.toString().equalsIgnoreCase("Finalizado")) {
-    		if(partido.esParticipante(jugador)) {
-    			partido.comentar(jugador, comentario);
-    			System.out.println("El jugador: " + jugador.getNombre() + " dejo el siguiente comentario: " + comentario);
+    public void comentarPartido(String id, Usuario jugador, String comentario) {
+    	Partido partido = getPartidoPorID(id);
+    	if (partido != null) {
+    		EstadoPartido estadoActual = partido.getEstado();
+    		if(estadoActual.toString().equalsIgnoreCase("Finalizado")) {
+    			if(partido.esParticipante(jugador)) {
+    				partido.comentar(jugador, comentario);
+    				partidoRepository.save(partido);
+    				System.out.println("El jugador: " + jugador.getNombre() + " dejo el siguiente comentario: " + comentario);
+    			}
     		}
     	}
-    	
     }
 
     @GetMapping
@@ -232,7 +240,7 @@ public class ControllerPartido {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PartidoDTO> obtenerPartido(@PathVariable int id) {
+    public ResponseEntity<PartidoDTO> obtenerPartido(@PathVariable String id) {
         PartidoDTO partido = getPartidoDTOPorID(id);
         if (partido != null) {
             return ResponseEntity.ok(partido);
@@ -274,9 +282,10 @@ public class ControllerPartido {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarPartido(@PathVariable int id) {
-        if (id >= 0 && id < partidos.size()) {
-            partidos.remove(id);
+    public ResponseEntity<Void> eliminarPartido(@PathVariable String id) {
+        Partido partido = getPartidoPorID(id);
+        if (partido != null) {
+            partidoRepository.delete(partido);
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
@@ -284,50 +293,56 @@ public class ControllerPartido {
     }
 
     @PostMapping("/{id}/agregar-jugador")
-    public ResponseEntity<Void> agregarJugador(@PathVariable int id, @RequestBody UsuarioDTO usuarioDTO) {
+    public ResponseEntity<Void> agregarJugador(@PathVariable String id, @RequestBody UsuarioDTO usuarioDTO) {
         Usuario jugador = DTOMapper.toUsuario(usuarioDTO, "");
-        if (id < 0 || id >= partidos.size()) return ResponseEntity.notFound().build();
+        Partido partido = getPartidoPorID(id);
+        if (partido == null) return ResponseEntity.notFound().build();
         agregarJugadorAPartido(id, jugador);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/armar")
-    public ResponseEntity<Void> armar(@PathVariable int id) {
-        if (id < 0 || id >= partidos.size()) return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> armar(@PathVariable String id) {
+        Partido partido = getPartidoPorID(id);
+        if (partido == null) return ResponseEntity.notFound().build();
         armarPartido(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/confirmar")
-    public ResponseEntity<Void> confirmar(@PathVariable int id, @RequestBody UsuarioDTO usuarioDTO) {
+    public ResponseEntity<Void> confirmar(@PathVariable String id, @RequestBody UsuarioDTO usuarioDTO) {
         Usuario jugador = DTOMapper.toUsuario(usuarioDTO, "");
-        if (id < 0 || id >= partidos.size()) return ResponseEntity.notFound().build();
+        Partido partido = getPartidoPorID(id);
+        if (partido == null) return ResponseEntity.notFound().build();
         confirmarPartido(id, jugador);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/comenzar")
-    public ResponseEntity<Void> comenzar(@PathVariable int id, @RequestBody UsuarioDTO usuarioDTO,
+    public ResponseEntity<Void> comenzar(@PathVariable String id, @RequestBody UsuarioDTO usuarioDTO,
                                          @RequestParam(defaultValue = "false") boolean overrideHorario) {
         Usuario jugador = DTOMapper.toUsuario(usuarioDTO, "");
-        if (id < 0 || id >= partidos.size()) return ResponseEntity.notFound().build();
+        Partido partido = getPartidoPorID(id);
+        if (partido == null) return ResponseEntity.notFound().build();
         comenzarPartido(id, jugador, overrideHorario);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/finalizar")
-    public ResponseEntity<Void> finalizar(@PathVariable int id, @RequestBody UsuarioDTO usuarioDTO,
+    public ResponseEntity<Void> finalizar(@PathVariable String id, @RequestBody UsuarioDTO usuarioDTO,
                                           @RequestParam(defaultValue = "false") boolean overrideHorario) {
         Usuario jugador = DTOMapper.toUsuario(usuarioDTO, "");
-        if (id < 0 || id >= partidos.size()) return ResponseEntity.notFound().build();
+        Partido partido = getPartidoPorID(id);
+        if (partido == null) return ResponseEntity.notFound().build();
         finalizarPartido(id, jugador, overrideHorario);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/comentar")
-    public ResponseEntity<Void> comentar(@PathVariable int id, @RequestBody ComentarioRequest comentarioRequest) {
+    public ResponseEntity<Void> comentar(@PathVariable String id, @RequestBody ComentarioRequest comentarioRequest) {
         Usuario jugador = DTOMapper.toUsuario(comentarioRequest.getUsuario(), "");
-        if (id < 0 || id >= partidos.size()) return ResponseEntity.notFound().build();
+        Partido partido = getPartidoPorID(id);
+        if (partido == null) return ResponseEntity.notFound().build();
         comentarPartido(id, jugador, comentarioRequest.getComentario());
         return ResponseEntity.ok().build();
     }
