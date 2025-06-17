@@ -39,8 +39,11 @@ public class EmparejamientoPorNivel implements EstrategiaEmparejamiento {
         Nivel nivelRequerido = partido.getNivel();
         Deporte deporte = partido.getDeporte();
         List<Usuario> jugadoresSeleccionados = new ArrayList<>();
-        int jugadorCreador = 0;
-        jugadoresSeleccionados.add(partido.getJugadoresParticipan().get(jugadorCreador));
+        List<Usuario> jugadoresPreAnotados = partido.getJugadoresParticipan();
+        for(Usuario jugador : jugadoresPreAnotados) {
+        	jugadoresSeleccionados.add(jugador);
+        }
+        
         
         if (NIVEL_MIN < 0 || NIVEL_MAX >= todosNiveles.length || NIVEL_MIN > NIVEL_MAX) {
             System.out.println("Error: índices inválidos.");
