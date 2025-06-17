@@ -7,12 +7,15 @@ import com.tpo.armarPartido.enums.MedioNotificacion;
 import com.tpo.armarPartido.enums.Nivel;
 import com.tpo.armarPartido.model.Ubicacion;
 import com.tpo.armarPartido.model.Usuario;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@RestController
+@RequestMapping("/api/usuarios")
 public class ControllerUsuario {
     private static ControllerUsuario instancia;
     private List<Usuario> usuarios;
@@ -98,5 +101,25 @@ public class ControllerUsuario {
             }
         }
         return null;
+    }
+
+    @GetMapping
+    public List<UsuarioDTO> getAllUsuarios() {
+        return getUsuariosDTO();
+    }
+
+    @GetMapping("/{nombre}")
+    public UsuarioDTO getUsuarioByNombre(@PathVariable String nombre) {
+        return getUsuarioDTOPorNombre(nombre);
+    }
+
+    @PostMapping
+    public void createUsuario(@RequestBody UsuarioDTO usuarioDTO, @RequestParam String contrasena) {
+        crearUsuario(usuarioDTO, contrasena);
+    }
+
+    @DeleteMapping("/{correo}")
+    public void deleteUsuario(@PathVariable String correo) {
+        eliminarUsuario(correo);
     }
 }

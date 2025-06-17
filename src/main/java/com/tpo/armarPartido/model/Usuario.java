@@ -68,5 +68,16 @@ public class Usuario {
 		return "Usuario [nombre=" + nombre + ", correo=" + correo + "]";
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Usuario usuario = (Usuario) o;
+		return correo != null && correo.equalsIgnoreCase(usuario.correo);
+	}
 
+	@Override
+	public int hashCode() {
+		return correo != null ? correo.toLowerCase().hashCode() : 0;
+	}
 }
