@@ -27,11 +27,13 @@ public class EmparejamientoPorUbicacion implements EstrategiaEmparejamiento {
     public List<Usuario> emparejar(Partido partido, List<Usuario> jugadores) {
         Ubicacion ubicacionPartido = partido.getUbicacion();
         List<Usuario> jugadoresSeleccionados = new ArrayList<>();
+        
+        List<Usuario> yaParticipan = partido.getJugadoresParticipan();
+        if (yaParticipan != null) {
+        	jugadoresSeleccionados.addAll(yaParticipan);
+        }
 
-        // Siempre agrego al creador del partido
-        int jugadorCreador = 0;
-        jugadoresSeleccionados.add(partido.getJugadoresParticipan().get(jugadorCreador));
-
+        
         // Filtrar y ordenar candidatos por cercanía
         List<Usuario> candidatos = jugadores.stream()
             .filter(j -> !jugadoresSeleccionados.contains(j))
