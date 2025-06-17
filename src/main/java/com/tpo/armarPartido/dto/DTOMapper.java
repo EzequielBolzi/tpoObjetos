@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class DTOMapper {
-    // Usuario -> UsuarioDTO
+    
     public static UsuarioDTO toUsuarioDTO(Usuario usuario) {
         if (usuario == null) return null;
         UsuarioDTO dto = new UsuarioDTO();
@@ -22,7 +22,7 @@ public class DTOMapper {
         return dto;
     }
 
-    // UsuarioDTO -> Usuario (for creation, password must be handled separately)
+    
     public static Usuario toUsuario(UsuarioDTO dto, String contrasena) {
         if (dto == null) return null;
         Usuario usuario = new Usuario(
@@ -33,11 +33,13 @@ public class DTOMapper {
             dto.getMedioNotificacion(),
             dto.getUbicacion()
         );
-        usuario.setId(dto.getId());
+        if (dto.getId() != null) {
+            usuario.setId(dto.getId());
+        }
         return usuario;
     }
 
-    // Partido -> PartidoDTO
+    
     public static PartidoDTO toPartidoDTO(Partido partido) {
         if (partido == null) return null;
         List<UsuarioDTO> jugadoresDTO = partido.getJugadoresParticipan() == null ? null :
@@ -48,7 +50,7 @@ public class DTOMapper {
             partido.getDuracion(),
             partido.getUbicacion(),
             partido.getHorario(),
-            partido.getEstado() != null ? partido.getEstado().toString() : null,
+            partido.getEstadoNombre(),
             partido.getNivel(),
             jugadoresDTO
         );
@@ -56,7 +58,7 @@ public class DTOMapper {
         return dto;
     }
 
-    // Comentario -> ComentarioDTO
+    
     public static ComentarioDTO toComentarioDTO(Comentario comentario) {
         if (comentario == null) return null;
         return new ComentarioDTO(
@@ -65,5 +67,20 @@ public class DTOMapper {
         );
     }
 
-    // Optionally, add more mapping methods as needed
+    
+    public static Partido toPartido(PartidoDTO dto) {
+        if (dto == null) return null;
+        Partido partido = new Partido();
+        partido.setId(dto.getId());
+        partido.setDeporte(dto.getDeporte());
+        partido.setCantidadJugadores(dto.getCantidadJugadores());
+        partido.setDuracion(dto.getDuracion());
+        partido.setUbicacion(dto.getUbicacion());
+        partido.setHorario(dto.getHorario());
+        partido.setNivel(dto.getNivel());
+        partido.setEstadoNombre(dto.getEstado() != null ? dto.getEstado() : "NecesitamosJugadores");
+        
+        return partido;
+    }
+
 } 

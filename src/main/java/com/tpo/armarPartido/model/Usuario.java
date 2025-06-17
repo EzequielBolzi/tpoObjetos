@@ -1,23 +1,37 @@
 package com.tpo.armarPartido.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 import com.tpo.armarPartido.enums.Deporte;
 import com.tpo.armarPartido.enums.MedioNotificacion;
 import com.tpo.armarPartido.enums.Nivel;
-
 import java.util.Map;
+import jakarta.persistence.*;
+import java.util.HashMap;
 
-@Document(collection = "usuarios")
+@Entity
 public class Usuario {
 	@Id
-	private String id;
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+
 	private String nombre;
 	private String correo;
 	private String contrasena;
-	private Map<Deporte, Nivel> nivelesPorDeporte;
+
+	@ElementCollection(fetch = FetchType.EAGER)
+	@CollectionTable(name = "usuario_niveles", joinColumns = @JoinColumn(name = "usuario_id"))
+	@MapKeyColumn(name = "deporte")
+	@MapKeyEnumerated(EnumType.STRING)
+	@Column(name = "nivel")
+	@Enumerated(EnumType.STRING)
+	private Map<Deporte, Nivel> nivelesPorDeporte = new HashMap<>();
+
+	@Enumerated(EnumType.STRING)
 	private MedioNotificacion medioNotificacion;
+
+	@Embedded
 	private Ubicacion ubicacion;
+
+	public Usuario() {}
 
 	public Usuario(String nombre, String correo, String contrasena,
 				   Map<Deporte, Nivel> nivelesPorDeporte,
@@ -30,13 +44,29 @@ public class Usuario {
 		this.ubicacion = ubicacion;
 	}
 
-	// Getters y Setters
+	
 	public String getNombre() {
 		return nombre;
 	}
 
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
+	}
+
 	public String getCorreo() {
 		return correo;
+	}
+
+	public void setCorreo(String correo) {
+		this.correo = correo;
+	}
+
+	public String getContrasena() {
+		return contrasena;
+	}
+
+	public void setContrasena(String contrasena) {
+		this.contrasena = contrasena;
 	}
 
 	public Map<Deporte, Nivel> getNivelesPorDeporte() {
@@ -51,15 +81,23 @@ public class Usuario {
 		return medioNotificacion;
 	}
 
+	public void setMedioNotificacion(MedioNotificacion medioNotificacion) {
+		this.medioNotificacion = medioNotificacion;
+	}
+
 	public Ubicacion getUbicacion() {
 		return ubicacion;
 	}
 
-	public String getId() {
+	public void setUbicacion(Ubicacion ubicacion) {
+		this.ubicacion = ubicacion;
+	}
+
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

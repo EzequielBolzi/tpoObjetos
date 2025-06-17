@@ -7,8 +7,6 @@ import com.tpo.armarPartido.enums.MedioNotificacion;
 import com.tpo.armarPartido.enums.Nivel;
 import com.tpo.armarPartido.model.Ubicacion;
 import com.tpo.armarPartido.model.Usuario;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.tpo.armarPartido.repository.UsuarioRepository;
 
 import java.util.ArrayList;
@@ -16,16 +14,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@RestController
-@RequestMapping("/api/usuarios")
 public class ControllerUsuario {
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+
+    public ControllerUsuario() {
+        this.usuarioRepository = new UsuarioRepository();
+    }
 
     public void crearUsuario(UsuarioDTO usuarioDTO, String contrasena) {
         Usuario nuevo = DTOMapper.toUsuario(usuarioDTO, contrasena);
         usuarioRepository.save(nuevo);
-        System.out.println(" + Se creó el usuario: " + nuevo.getNombre());
+        System.out.println("Se creó el usuario: " + nuevo.getNombre());
     }
 
     public void crearUsuario(String nombre, String correo, String contrasena,
@@ -33,13 +32,14 @@ public class ControllerUsuario {
                              MedioNotificacion medioNotificacion, Ubicacion ubicacion) {
         Usuario nuevo = new Usuario(nombre, correo, contrasena, nivelesPorDeporte, medioNotificacion, ubicacion);
         usuarioRepository.save(nuevo);
-        System.out.println(" + Se creó el usuario: " + nuevo.getNombre());
+        System.out.println("Se creó el usuario: " + nuevo.getNombre());
     }
 
     public void eliminarUsuario(String correo) {
         Usuario usuario = usuarioRepository.findByCorreo(correo);
         if (usuario != null) {
             usuarioRepository.delete(usuario);
+            System.out.println("Usuario eliminado: " + usuario.getNombre());
         }
     }
 
@@ -49,6 +49,7 @@ public class ControllerUsuario {
             Usuario actualizado = DTOMapper.toUsuario(usuarioDTO, contrasena);
             actualizado.setId(usuarioExistente.getId());
             usuarioRepository.save(actualizado);
+            System.out.println("Usuario modificado: " + actualizado.getNombre());
         }
     }
 
@@ -57,6 +58,7 @@ public class ControllerUsuario {
         if (usuarioExistente != null) {
             usuarioModificado.setId(usuarioExistente.getId());
             usuarioRepository.save(usuarioModificado);
+            System.out.println("Usuario modificado: " + usuarioModificado.getNombre());
         }
     }
 
@@ -78,7 +80,7 @@ public class ControllerUsuario {
         if (usuario != null) {
             usuario.getNivelesPorDeporte().put(deporteNuevo, nivelDeDeporte);
             usuarioRepository.save(usuario);
-            System.out.println("Se agrego a " + usuario.getNombre() + " el deporte " + deporteNuevo + " con el nivel " + nivelDeDeporte);
+            System.out.println("Se agregó a " + usuario.getNombre() + " el deporte " + deporteNuevo + " con el nivel " + nivelDeDeporte);
         }
     }
     
@@ -86,23 +88,19 @@ public class ControllerUsuario {
         return usuarioRepository.findByNombre(nombre);
     }
 
-    @GetMapping
     public List<UsuarioDTO> getAllUsuarios() {
         return getUsuariosDTO();
     }
 
-    @GetMapping("/{nombre}")
-    public UsuarioDTO getUsuarioByNombre(@PathVariable String nombre) {
+    public UsuarioDTO getUsuarioByNombre(String nombre) {
         return getUsuarioDTOPorNombre(nombre);
     }
 
-    @PostMapping
-    public void createUsuario(@RequestBody UsuarioDTO usuarioDTO, @RequestParam String contrasena) {
+    public void createUsuario(UsuarioDTO usuarioDTO, String contrasena) {
         crearUsuario(usuarioDTO, contrasena);
     }
 
-    @DeleteMapping("/{correo}")
-    public void deleteUsuario(@PathVariable String correo) {
+    public void deleteUsuario(String correo) {
         eliminarUsuario(correo);
     }
 }

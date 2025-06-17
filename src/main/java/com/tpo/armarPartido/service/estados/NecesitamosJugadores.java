@@ -30,17 +30,17 @@ public class NecesitamosJugadores implements EstadoPartido {
 
     @Override
     public void confirmar(Partido partido) {
-        // No se permite confirmar en este estado
+        // No aplica a este estado
     }
 
     @Override
     public void comenzar(Partido partido) {
-        // No se permite comenzar en este estado
+        // No aplica a este estado
     }
 
     @Override
     public void finalizar(Partido partido) {
-        // No se permite finalizar en este estado
+        // No aplica a este estado
     }
 
     public String getMessage(Partido partido) {
@@ -48,8 +48,8 @@ public class NecesitamosJugadores implements EstadoPartido {
     }
 
 	@Override
-	public void comentar(Usuario jugador, String comentario) {
-		// TODO Auto-generated method stub
+	public void comentar(Usuario jugador, String comentario, Partido partido) {
+		// No aplica a este estado
 		
 	}
 

@@ -42,7 +42,7 @@ curl -X POST "http://localhost:8080/api/partidos?emparejamiento=ubicacion" \
 }"
 
 // Agregar a jugador al partido
-curl -X POST "http://localhost:8080/api/partidos/6850dc44b6b0e4067d62810a/agregar-jugador" \
+curl -X POST "http://localhost:8080/api/partidos/1/agregar-jugador" \
  -H "Content-Type: application/json" \
  -d '{
 "nombre": "Juan Perez",
@@ -53,31 +53,31 @@ curl -X POST "http://localhost:8080/api/partidos/6850dc44b6b0e4067d62810a/agrega
 }'
 
 // Armar partido
-curl -X POST "http://localhost:8080/api/partidos/6850dc44b6b0e4067d62810a/armar"
+curl -X POST "http://localhost:8080/api/partidos/1/armar"
 
 //Confirmar partido
-curl -X POST "http://localhost:8080/api/partidos/6850cd638153dd1d245d04a6/confirmar" \
+curl -X POST "http://localhost:8080/api/partidos/1/confirmar" \
  -H "Content-Type: application/json" \
- -d '{"nombre": "Luis Martinez", "correo": "luis@example.com"}'
+ -d '{"nombre": "Luis Martinez", "correo": "joseluiskoller98@gmail.com"}'
 
-curl -X POST "http://localhost:8080/api/partidos/6850cd638153dd1d245d04a6/confirmar" \
+curl -X POST "http://localhost:8080/api/partidos/1/confirmar" \
  -H "Content-Type: application/json" \
- -d '{"nombre": "Juan Perez", "correo": "juan@example.com"}'
+ -d '{"nombre": "Juan Perez", "correo": "hi@0xkoller.me"}'
 
 // comenzar partido (overrideHorario=true esto lo que hace es que se pueda comenzar el partido sin importar la hora)
-curl -X POST "http://localhost:8080/api/partidos/6850cd638153dd1d245d04a6/comenzar?overrideHorario=true" \
+curl -X POST "http://localhost:8080/api/partidos/1/comenzar?overrideHorario=true" \
  -H "Content-Type: application/json" \
- -d '{"nombre": "Luis Martinez", "correo": "luis@example.com"}'
+ -d '{"nombre": "Luis Martinez", "correo": "joseluiskoller98@gmail.com"}'
 
 // finalizar partido (overrideHorario=true esto lo que hace es que se pueda finalizar el partido sin importar la hora)
-curl -X POST "http://localhost:8080/api/partidos/6850cd638153dd1d245d04a6/finalizar?overrideHorario=true" \
+curl -X POST "http://localhost:8080/api/partidos/1/finalizar?overrideHorario=true" \
  -H "Content-Type: application/json" \
- -d '{"nombre": "Luis Martinez", "correo": "luis@example.com"}'
+ -d '{"nombre": "Luis Martinez", "correo": "joseluiskoller98@gmail.com"}'
 
 // comentar partido
-curl -X POST "http://localhost:8080/api/partidos/6850cd638153dd1d245d04a6/comentar" \
+curl -X POST "http://localhost:8080/api/partidos/1/comentar" \
  -H "Content-Type: application/json" \
  -d '{
-"usuario": { "nombre": "Juan Perez", "correo": "juan@example.com" },
+"usuario": { "nombre": "Juan Perez", "correo": "hi@0xkoller.me" },
 "comentario": "Me encantó el partido!!"
 }'

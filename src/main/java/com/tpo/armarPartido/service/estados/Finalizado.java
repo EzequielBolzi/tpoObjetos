@@ -33,31 +33,31 @@ public class Finalizado implements EstadoPartido {
 
 	@Override
     public void cancelar(Partido partido) {
-        // No aplica.
+        // No aplica a este estado
 
     }
 
     @Override
     public void armar(Partido partido) {
-        // No aplica.
+        // No aplica a este estado
 
     }
 
     @Override
     public void confirmar(Partido partido) {
-        // No aplica.
+        // No aplica a este estado
 
     }
 
     @Override
     public void comenzar(Partido partido) {
-        // No aplica.
+        // No aplica a este estado
 
     }
 
     @Override
     public void finalizar(Partido partido) {
-        // No aplica.
+        // No aplica a este estado
 
     }
 
@@ -69,10 +69,9 @@ public class Finalizado implements EstadoPartido {
 
 
 	@Override
-	public void comentar(Usuario jugador, String comentario) {
-		Comentario comentarioNuevo = new Comentario(jugador, comentario);
+	public void comentar(Usuario jugador, String comentario, Partido partido) {
+		Comentario comentarioNuevo = new Comentario(jugador, comentario, partido);
 		comentarios.add(comentarioNuevo);
-		
 	}
 
 

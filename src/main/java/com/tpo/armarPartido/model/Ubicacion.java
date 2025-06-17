@@ -1,5 +1,8 @@
 package com.tpo.armarPartido.model;
 
+import jakarta.persistence.Embeddable;
+
+@Embeddable
 public class Ubicacion {
     private double latitud;
     private double longitud;

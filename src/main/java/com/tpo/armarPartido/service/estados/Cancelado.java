@@ -48,8 +48,8 @@ public class Cancelado implements EstadoPartido {
     }
 
 	@Override
-	public void comentar(Usuario jugador, String comentario) {
-		// TODO Auto-generated method stub
+	public void comentar(Usuario jugador, String comentario, Partido partido) {
+		// No aplica a este estado
 		
 	}
 

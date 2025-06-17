@@ -7,7 +7,7 @@ import com.tpo.armarPartido.model.Ubicacion;
 import java.util.Map;
 
 public class UsuarioDTO {
-    private String id;
+    private Long id;
     private String nombre;
     private String correo;
     private Map<Deporte, Nivel> nivelesPorDeporte;
@@ -17,7 +17,7 @@ public class UsuarioDTO {
     public UsuarioDTO() {}
 
     public UsuarioDTO(String id, String nombre, String correo, Map<Deporte, Nivel> nivelesPorDeporte, MedioNotificacion medioNotificacion, Ubicacion ubicacion) {
-        this.id = id;
+        this.id = Long.parseLong(id);
         this.nombre = nombre;
         this.correo = correo;
         this.nivelesPorDeporte = nivelesPorDeporte;
@@ -25,11 +25,11 @@ public class UsuarioDTO {
         this.ubicacion = ubicacion;
     }
 
-    public String getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

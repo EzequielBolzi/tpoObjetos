@@ -10,5 +10,5 @@ public interface EstadoPartido {
     void comenzar(Partido partido);
     void finalizar(Partido partido);
     String getMessage(Partido partido);
-    void comentar(Usuario jugador, String comentario);
+    void comentar(Usuario jugador, String comentario, Partido partido);
 }

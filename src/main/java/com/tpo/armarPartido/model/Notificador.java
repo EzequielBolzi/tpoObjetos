@@ -6,6 +6,7 @@ import com.tpo.armarPartido.service.EstrategiaNotificacionSMS;
 import com.tpo.armarPartido.service.EstrategiaNotificacionMail;
 import com.tpo.armarPartido.service.AdapterNotificacionMail;
 import com.tpo.armarPartido.service.iObserver;
+import java.time.LocalDateTime;
 
 public class Notificador implements iObserver {
     private EstrategiaNotificacion estrategiaDeNotificacion;
@@ -60,7 +61,7 @@ public class Notificador implements iObserver {
                             continue;
                     }
                     estrategiaDeNotificacion.enviarNotificacion(
-                            new Notificacion(partido.getEstado().getMessage(partido), usuario)
+                            new Notificacion(usuario, partido, partido.getEstado().getMessage(partido), "ESTADO", LocalDateTime.now())
                     );
                 }
             }

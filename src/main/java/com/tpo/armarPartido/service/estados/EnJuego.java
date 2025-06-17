@@ -17,25 +17,25 @@ public class EnJuego implements EstadoPartido {
 
     @Override
     public void cancelar(Partido partido) {
-        // No aplica.
+        // No aplica a este estado
 
     }
 
     @Override
     public void armar(Partido partido) {
-        // No aplica.
+        // No aplica a este estado
 
     }
 
     @Override
     public void confirmar(Partido partido) {
-        // No aplica.
+        // No aplica a este estado
 
     }
 
     @Override
     public void comenzar(Partido partido) {
-        // No aplica.
+            // No aplica a este estado
 
     }
 
@@ -61,8 +61,8 @@ public class EnJuego implements EstadoPartido {
     }
 
 	@Override
-	public void comentar(Usuario jugador, String comentario) {
-		// TODO Auto-generated method stub
+	public void comentar(Usuario jugador, String comentario, Partido partido) {
+		// No aplica a este estado
 		
 	}
 

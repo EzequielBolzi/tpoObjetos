@@ -11,7 +11,7 @@ import com.tpo.armarPartido.model.Ubicacion;
 public class GenerarUsuarios {
 	
 	public static void generar(ControllerUsuario userController) {
-	    // Usuarios con sus niveles por deporte --> CAMBIO DE LISTAS POR DICCIONARIO
+	    // Usuarios con sus niveles por deporte
 	    Map<Deporte, Nivel> nivelesJuan = new HashMap<>();
 	    nivelesJuan.put(Deporte.FUTBOL, Nivel.INTERMEDIO);
 	    nivelesJuan.put(Deporte.BASQUET, Nivel.PRINCIPIANTE);

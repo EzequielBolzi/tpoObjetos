@@ -26,13 +26,13 @@ public class Confirmacion implements EstadoPartido {
 
     @Override
     public void armar(Partido partido) {
-        // No aplica. El partido ya está armado.
+        // No aplica a este estado
 
     }
 
     @Override
     public void confirmar(Partido partido) {
-        // No aplica. Los jugadores ya estan todos confirmados
+        // No aplica a este estado
 
     }
 
@@ -53,7 +53,7 @@ public class Confirmacion implements EstadoPartido {
 
     @Override
     public void finalizar(Partido partido) {
-        // no aplica
+        // No aplica a este estado
 
     }
 
@@ -64,9 +64,8 @@ public class Confirmacion implements EstadoPartido {
     }
 
 	@Override
-	public void comentar(Usuario jugador, String comentario) {
-		// TODO Auto-generated method stub
-		
+	public void comentar(Usuario jugador, String comentario, Partido partido) {
+		    // No aplica a este estado
 	}
 
 }

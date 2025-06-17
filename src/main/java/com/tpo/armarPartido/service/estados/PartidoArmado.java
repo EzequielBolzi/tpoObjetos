@@ -4,18 +4,9 @@ import com.tpo.armarPartido.model.*;
 
 public class PartidoArmado implements EstadoPartido {
 
-    private int confirmaciones = 0;
     private static final String mensaje = "Ya sos parte del partido %s! Nivel: %s Por favor envia tu confirmacion al partido del jugador:  %s \n -------------------------";
 
     public PartidoArmado() {}
-
-    public int getConfirmaciones() {
-        return confirmaciones;
-    }
-
-    public void setConfirmaciones(int confirmaciones) {
-        this.confirmaciones = confirmaciones;
-    }
 
     @Override
     public void cancelar(Partido partido) {
@@ -29,12 +20,14 @@ public class PartidoArmado implements EstadoPartido {
 
 	@Override
     public void armar(Partido partido) {
-        // No aplica. El partido ya está armado.
+        // No aplica a este estado
     }
 
     @Override
     public void confirmar(Partido partido) {
+        int confirmaciones = partido.getConfirmaciones();
         confirmaciones++;
+        partido.setConfirmaciones(confirmaciones);
         System.out.println("Un usuario confirmo! Tenemos "+ confirmaciones + " confirmaciones en total. " );
         if (confirmaciones >= partido.getJugadoresParticipan().size()) {
             partido.cambiarEstado(new Confirmacion());            
@@ -43,12 +36,12 @@ public class PartidoArmado implements EstadoPartido {
 
     @Override
     public void comenzar(Partido partido) {
-        // No aplica.
+        // No aplica a este estado
     }
 
     @Override
     public void finalizar(Partido partido) {
-        // No aplica.
+        // No aplica a este estado
     }
 
     @Override
@@ -57,8 +50,7 @@ public class PartidoArmado implements EstadoPartido {
     }
 
 	@Override
-	public void comentar(Usuario jugador, String comentario) {
-		// TODO Auto-generated method stub
-		
+	public void comentar(Usuario jugador, String comentario, Partido partido) {
+		// No aplica a este estado
 	}
 }

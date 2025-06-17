@@ -1,21 +1,21 @@
 package com.tpo.armarPartido.repository;
 
-import com.tpo.armarPartido.model.Comentario;
+import com.tpo.armarPartido.model.Notificacion;
 import jakarta.persistence.*;
 import java.util.List;
 
-public class ComentarioRepository {
+public class NotificacionRepository {
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
 
-    public void save(Comentario comentario) {
+    public void save(Notificacion notificacion) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            if (comentario.getId() == null) {
-                em.persist(comentario);
+            if (notificacion.getId() == null) {
+                em.persist(notificacion);
             } else {
-                em.merge(comentario);
+                em.merge(notificacion);
             }
             tx.commit();
         } finally {
@@ -24,30 +24,30 @@ public class ComentarioRepository {
         }
     }
 
-    public Comentario findById(Long id) {
+    public Notificacion findById(Long id) {
         EntityManager em = emf.createEntityManager();
         try {
-            return em.find(Comentario.class, id);
+            return em.find(Notificacion.class, id);
         } finally {
             em.close();
         }
     }
 
-    public List<Comentario> findAll() {
+    public List<Notificacion> findAll() {
         EntityManager em = emf.createEntityManager();
         try {
-            return em.createQuery("SELECT c FROM Comentario c", Comentario.class).getResultList();
+            return em.createQuery("SELECT n FROM Notificacion n", Notificacion.class).getResultList();
         } finally {
             em.close();
         }
     }
 
-    public void delete(Comentario comentario) {
+    public void delete(Notificacion notificacion) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            Comentario managed = em.find(Comentario.class, comentario.getId());
+            Notificacion managed = em.find(Notificacion.class, notificacion.getId());
             if (managed != null) {
                 em.remove(managed);
             }
