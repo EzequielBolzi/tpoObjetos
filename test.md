@@ -3,7 +3,7 @@ curl -X POST "http://localhost:8080/api/usuarios?contrasena=1234" \
  -H "Content-Type: application/json" \
  -d '{
 "nombre": "Luis Martinez",
-"correo": "luis@example.com",
+"correo": "joseluiskoller98@gmail.com",
 "nivelesPorDeporte": { "FUTBOL": "AVANZADO" },
 "medioNotificacion": "EMAIL",
 "ubicacion": { "latitud": 1, "longitud": 1 }
@@ -13,7 +13,7 @@ curl -X POST "http://localhost:8080/api/usuarios?contrasena=1234" \
  -H "Content-Type: application/json" \
  -d '{
 "nombre": "Juan Perez",
-"correo": "juan@example.com",
+"correo": "hi@0xkoller.me",
 "nivelesPorDeporte": { "FUTBOL": "AVANZADO" },
 "medioNotificacion": "EMAIL",
 "ubicacion": { "latitud": 1, "longitud": 1 }
@@ -33,7 +33,7 @@ curl -X POST "http://localhost:8080/api/partidos?emparejamiento=ubicacion" \
 \"jugadoresParticipan\": [
 {
 \"nombre\": \"Luis Martinez\",
-\"correo\": \"luis@example.com\",
+\"correo\": \"joseluiskoller98@gmail.com\",
 \"nivelesPorDeporte\": { \"FUTBOL\": \"AVANZADO\" },
 \"medioNotificacion\": \"EMAIL\",
 \"ubicacion\": { \"latitud\": 1, \"longitud\": 1 }
@@ -42,40 +42,40 @@ curl -X POST "http://localhost:8080/api/partidos?emparejamiento=ubicacion" \
 }"
 
 // Agregar a jugador al partido
-curl -X POST "http://localhost:8080/api/partidos/0/agregar-jugador" \
+curl -X POST "http://localhost:8080/api/partidos/6850dc44b6b0e4067d62810a/agregar-jugador" \
  -H "Content-Type: application/json" \
  -d '{
 "nombre": "Juan Perez",
-"correo": "juan@example.com",
+"correo": "hi@0xkoller.me",
 "nivelesPorDeporte": { "FUTBOL": "AVANZADO" },
 "medioNotificacion": "EMAIL",
 "ubicacion": { "latitud": 1, "longitud": 1 }
 }'
 
 // Armar partido
-curl -X POST "http://localhost:8080/api/partidos/0/armar"
+curl -X POST "http://localhost:8080/api/partidos/6850dc44b6b0e4067d62810a/armar"
 
 //Confirmar partido
-curl -X POST "http://localhost:8080/api/partidos/6850c2bf0dcb9de42cc5f977/confirmar" \
+curl -X POST "http://localhost:8080/api/partidos/6850cd638153dd1d245d04a6/confirmar" \
  -H "Content-Type: application/json" \
  -d '{"nombre": "Luis Martinez", "correo": "luis@example.com"}'
 
-curl -X POST "http://localhost:8080/api/partidos/6850c2bf0dcb9de42cc5f977/confirmar" \
+curl -X POST "http://localhost:8080/api/partidos/6850cd638153dd1d245d04a6/confirmar" \
  -H "Content-Type: application/json" \
  -d '{"nombre": "Juan Perez", "correo": "juan@example.com"}'
 
 // comenzar partido (overrideHorario=true esto lo que hace es que se pueda comenzar el partido sin importar la hora)
-curl -X POST "http://localhost:8080/api/partidos/6850c2bf0dcb9de42cc5f977/comenzar?overrideHorario=true" \
+curl -X POST "http://localhost:8080/api/partidos/6850cd638153dd1d245d04a6/comenzar?overrideHorario=true" \
  -H "Content-Type: application/json" \
  -d '{"nombre": "Luis Martinez", "correo": "luis@example.com"}'
 
 // finalizar partido (overrideHorario=true esto lo que hace es que se pueda finalizar el partido sin importar la hora)
-curl -X POST "http://localhost:8080/api/partidos/6850c2bf0dcb9de42cc5f977/finalizar?overrideHorario=true" \
+curl -X POST "http://localhost:8080/api/partidos/6850cd638153dd1d245d04a6/finalizar?overrideHorario=true" \
  -H "Content-Type: application/json" \
  -d '{"nombre": "Luis Martinez", "correo": "luis@example.com"}'
 
 // comentar partido
-curl -X POST "http://localhost:8080/api/partidos/6850c2bf0dcb9de42cc5f977/comentar" \
+curl -X POST "http://localhost:8080/api/partidos/6850cd638153dd1d245d04a6/comentar" \
  -H "Content-Type: application/json" \
  -d '{
 "usuario": { "nombre": "Juan Perez", "correo": "juan@example.com" },

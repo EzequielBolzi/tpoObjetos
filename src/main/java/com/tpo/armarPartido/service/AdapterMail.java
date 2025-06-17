@@ -7,15 +7,9 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-//@Service
+@Service
 public class AdapterMail implements AdapterNotificacionMail {
-    @Override
-    public void notificar(Notificacion notificacion) {
-        System.out.println("Enviando Email a direccion de correo:" + notificacion.getUsuario().getCorreo());
-        System.out.println("Mensaje: " + notificacion.getMensaje());
-    }
-
-/*    @Autowired
+    @Autowired
     private JavaMailSender mailSender;
     @Value("${spring.mail.from}")
     private String mailFrom;
@@ -28,7 +22,6 @@ public class AdapterMail implements AdapterNotificacionMail {
             message.setTo(notificacion.getUsuario().getCorreo());
             message.setSubject("Notificación de Partido");
             message.setText(notificacion.getMensaje());
-
             mailSender.send(message);
             System.out.println("Email enviado exitosamente a: " + notificacion.getUsuario().getCorreo());
 
@@ -36,5 +29,5 @@ public class AdapterMail implements AdapterNotificacionMail {
             System.err.println("Error enviando email: " + e.getMessage());
             e.printStackTrace();
         }
-    }*/
+    }
 }

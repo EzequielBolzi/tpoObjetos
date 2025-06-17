@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.tpo.armarPartido.repository.PartidoRepository;
+import com.tpo.armarPartido.service.NotificacionService;
 
 @RestController
 @RequestMapping("/api/partidos")
@@ -26,65 +27,18 @@ public class ControllerPartido {
 	
     @Autowired
     private PartidoRepository partidoRepository;
-    private static ControllerPartido instancia;
+    @Autowired
+    private AdapterMail adapterMail;
+    @Autowired
+    private NotificacionService notificacionService;
 
-    private ControllerPartido() {
-    }
-
-    public static ControllerPartido getInstancia() {
-        System.out.println("Inicio Controlador de Partidos ");
-    	if (instancia == null) {
-            instancia = new ControllerPartido();
-        }
-        return instancia;
-    }
-    
     public void crearPartido(Deporte deporte, int cantidadJugadores, int duracion, Ubicacion ubicacion, Date horario, EstrategiaEmparejamiento emparejamiento, Usuario usuarioCreador, Nivel nivel) {
     	EstadoPartido estadoInicial = new NecesitamosJugadores();
     	List<Usuario> listaJugadoresParticipan = new ArrayList<Usuario>();
     	listaJugadoresParticipan.add(usuarioCreador);
-        AdapterNotificacionMail adapter = new AdapterMail(); // agrego el adaptermail
-        Notificador notificador = new Notificador(adapter);
-    	List<iObserver> observadores = new ArrayList<iObserver>();
-    	observadores.add(notificador);
-    	Partido nuevo = new Partido(deporte, cantidadJugadores, duracion, ubicacion, horario, estadoInicial, emparejamiento, listaJugadoresParticipan, nivel, observadores);
+    	Partido nuevo = new Partido(deporte, cantidadJugadores, duracion, ubicacion, horario, estadoInicial, emparejamiento, listaJugadoresParticipan, nivel);
     	partidoRepository.save(nuevo);
     	System.out.println(" + Se creo un nuevo partido de " + nuevo.getDeporte());
-    }
-    
-    public void buscarPartidosPorNivel(Nivel nivel) {
-        System.out.println("Buscando partidos con nivel: " + nivel);
-        List<Partido> partidos = partidoRepository.findAll();
-        boolean encontrados = false;
-        for (Partido partido : partidos) {
-            if (partido.getNivel().equals(nivel)) {
-                System.out.println("ID Partido: " + partido.getId());
-                System.out.println(" - Deporte: " + partido.getDeporte());
-                System.out.println(" - Nivel: " + partido.getNivel());
-                System.out.println(" - Ubicación: " + partido.getUbicacion());
-                System.out.println(" - Horario: " + partido.getHorario());
-                System.out.println(" - Cantidad de jugadores: " + partido.getCantidadJugadores());
-                System.out.println(" - Jugadores actuales: " + partido.getJugadoresParticipan().size());
-                System.out.println(" - Estado: " + partido.getEstado());
-                System.out.println("-----------------------------------");
-                encontrados = true;
-            }
-        }
-        if (!encontrados) {
-            System.out.println("No se encontraron partidos con el nivel: " + nivel);
-        }
-    }
-    
-    public void buscarPartidosPorUbicacion(Ubicacion ubicacionCentral, int cantidadPartidos) {
-    	if(ubicacionCentral == null) {
-    		System.err.println("La ubicacion esta vacia.");
-    	}
-    	
-    	List<Partido> partidosEnEstadoNecesitamosJugadores = partidoRepository.findAll().stream()
-            .filter(p -> p.getEstado().toString().equals("NecesitamosJugadores"))
-            .collect(Collectors.toList());
-    	
-    	buscarMasCercanos(partidosEnEstadoNecesitamosJugadores, ubicacionCentral, cantidadPartidos);
     }
     
     public List<Partido> buscarMasCercanos(List<Partido> listaPartidos, Ubicacion ubicacionCentral, int cantidadPartidos) {
@@ -141,6 +95,10 @@ public class ControllerPartido {
             if (partido.getJugadoresParticipan().size() >= partido.getCantidadJugadores()) {
                 partido.getEstado().armar(partido);
                 System.out.println("✅ Partido armado con éxito con estrategia: " + partido.getEmparejamiento().toString());
+                // Notificar a los jugadores por su medio preferido
+                for (Usuario usuario : partido.getJugadoresParticipan()) {
+                    notificacionService.notificarPorMedio("El partido ha sido armado y está listo para confirmar.", usuario);
+                }
             } else {
                 System.out.println("⚠️ No se pudo armar el partido. Jugadores seleccionados: " + seleccionados.size() + " --> falta de Jugadores Online");
             }
@@ -234,29 +192,54 @@ public class ControllerPartido {
     	}
     }
 
-    @GetMapping
-    public List<PartidoDTO> listarPartidos() {
-        return getPartidosDTO();
+    public List<Partido> filtrarPorNivel(Nivel nivel) {
+        return partidoRepository.findAll().stream()
+            .filter(p -> p.getNivel().equals(nivel))
+            .collect(Collectors.toList());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<PartidoDTO> obtenerPartido(@PathVariable String id) {
-        PartidoDTO partido = getPartidoDTOPorID(id);
-        if (partido != null) {
-            return ResponseEntity.ok(partido);
+    public List<Partido> filtrarPorUbicacion(double lat, double lng, int cantidad) {
+        Ubicacion ubicacionCentral = new Ubicacion(lat, lng);
+        List<Partido> partidos = partidoRepository.findAll();
+        return buscarMasCercanos(partidos, ubicacionCentral, cantidad);
+    }
+
+    public List<Partido> filtrarPorNivelYUbicacion(Nivel nivel, double lat, double lng, int cantidad) {
+        List<Partido> partidosPorNivel = filtrarPorNivel(nivel);
+        Ubicacion ubicacionCentral = new Ubicacion(lat, lng);
+        return buscarMasCercanos(partidosPorNivel, ubicacionCentral, cantidad);
+    }
+
+    @GetMapping
+    public List<PartidoDTO> buscarPartidos(
+        @RequestParam(required = false) Nivel nivel,
+        @RequestParam(required = false) Double lat,
+        @RequestParam(required = false) Double lng,
+        @RequestParam(required = false) Integer cantidad
+    ) {
+        List<Partido> partidos;
+
+        if (nivel != null && lat != null && lng != null && cantidad != null) {
+            partidos = filtrarPorNivelYUbicacion(nivel, lat, lng, cantidad);
+        } else if (nivel != null) {
+            partidos = filtrarPorNivel(nivel);
+        } else if (lat != null && lng != null && cantidad != null) {
+            partidos = filtrarPorUbicacion(lat, lng, cantidad);
         } else {
-            return ResponseEntity.notFound().build();
+            partidos = partidoRepository.findAll();
         }
+
+        return partidos.stream().map(DTOMapper::toPartidoDTO).collect(Collectors.toList());
     }
 
     @PostMapping
     public ResponseEntity<Void> crearPartido(@RequestBody PartidoDTO partidoDTO, @RequestParam String emparejamiento) {
-        // Get creator from first jugador in DTO
+        
         if (partidoDTO.getJugadoresParticipan() == null || partidoDTO.getJugadoresParticipan().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
         UsuarioDTO creadorDTO = partidoDTO.getJugadoresParticipan().get(0);
-        // For now, password is not handled (should be improved)
+        
         Usuario usuarioCreador = DTOMapper.toUsuario(creadorDTO, "");
 
         EstrategiaEmparejamiento estrategia;
@@ -347,7 +330,6 @@ public class ControllerPartido {
         return ResponseEntity.ok().build();
     }
 
-    // DTO for comment endpoint
     public static class ComentarioRequest {
         private UsuarioDTO usuario;
         private String comentario;

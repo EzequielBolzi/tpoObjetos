@@ -21,18 +21,6 @@ import java.util.stream.Collectors;
 public class ControllerUsuario {
     @Autowired
     private UsuarioRepository usuarioRepository;
-    private static ControllerUsuario instancia;
-
-    private ControllerUsuario() {
-    }
-
-    public static ControllerUsuario getInstancia() {
-        if (instancia == null) {
-            instancia = new ControllerUsuario();
-            System.out.println("Inicio Controlador de Usuarios");
-        }
-        return instancia;
-    }
 
     public void crearUsuario(UsuarioDTO usuarioDTO, String contrasena) {
         Usuario nuevo = DTOMapper.toUsuario(usuarioDTO, contrasena);

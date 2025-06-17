@@ -26,13 +26,12 @@ public class Partido {
     private EstrategiaEmparejamiento emparejamiento;
     private List<Usuario> jugadoresParticipan;
     private Nivel nivel;
-    private List<iObserver> observadores; // Lista de Notificadores
 
     public Partido() {}
 
     public Partido(Deporte deporte, int cantidadJugadores, int duracion, Ubicacion ubicacion, Date horario,
                    EstadoPartido estado, EstrategiaEmparejamiento emparejamiento, List<Usuario> jugadoresParticipan,
-                   Nivel nivel, List<iObserver> observadores) {
+                   Nivel nivel) {
         this.deporte = deporte;
         this.cantidadJugadores = cantidadJugadores;
         this.duracion = duracion;
@@ -42,15 +41,13 @@ public class Partido {
         this.emparejamiento = emparejamiento;
         this.jugadoresParticipan = jugadoresParticipan;
         this.nivel = nivel;
-        this.observadores = observadores;
     }
 
     @Override
 	public String toString() {
 		return "Partido [deporte=" + deporte + ", cantidadJugadores=" + cantidadJugadores + ", duracion=" + duracion
 				+ ", ubicacion=" + ubicacion + ", horario=" + horario + ", estado=" + estado + ", emparejamiento="
-				+ emparejamiento + ", jugadoresParticipan=" + jugadoresParticipan + ", nivel=" + nivel
-				+ ", observadores=" + observadores + "]";
+				+ emparejamiento + ", jugadoresParticipan=" + jugadoresParticipan + ", nivel=" + nivel + "]";
 	}
 
 	public void cambiarEstado(EstadoPartido nuevo) {
@@ -58,8 +55,6 @@ public class Partido {
         this.estado = nuevo;
         System.out.println("++ Nuevo estado: " + this.getEstado());
         System.out.println("-----------------------------------");
-        // Crear notificación con información del cambio
-        notificarObservadores();
     }
 
     public void agregarJugador(Usuario jugador) {
@@ -67,26 +62,6 @@ public class Partido {
             jugadoresParticipan.add(jugador);
         } else {
             System.out.println("El equipo está completo.");
-        }
-    }
-
-    public void agregarObservador(iObserver observador) {
-        if (observador != null && !observadores.contains(observador)) {
-            observadores.add(observador);
-        }
-    }
-
-    public void quitarObservador(iObserver observador) {
-        observadores.remove(observador);
-    }
-
-    private void notificarObservadores() {
-        for (iObserver observador : observadores) {
-            try {
-                observador.actualizar(this);
-            } catch (Exception e) {
-                System.err.printf("Error al notificar observador: %s%n", e.getMessage());
-            }
         }
     }
 
@@ -195,14 +170,6 @@ public class Partido {
 
     public void setNivel(Nivel nivel) {
         this.nivel = nivel;
-    }
-
-    public List<iObserver> getObservadores() {
-        return this.observadores;
-    }
-
-    public void setObservadores(List<iObserver> observadores) {
-        this.observadores = observadores;
     }
 
     public String getId() {
