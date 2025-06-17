@@ -14,9 +14,13 @@ import com.tpo.armarPartido.service.EmparejamientoPorNivel;
 import com.tpo.armarPartido.repository.NotificacionRepository;
 import com.tpo.armarPartido.model.Notificacion;
 import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Entity
 public class Partido {
+    private static final Logger logger = LoggerFactory.getLogger(Partido.class);
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -46,6 +50,7 @@ public class Partido {
     private String estadoNombre;
     private String emparejamientoTipo; 
     private int confirmaciones;
+    private Long creadorId;
 
     public Partido() {}
 
@@ -58,6 +63,9 @@ public class Partido {
         this.ubicacion = ubicacion;
         this.horario = horario;
         this.estado = estado;
+        if (estado != null) {
+            this.estadoNombre = estado.toString();
+        }
         this.emparejamiento = emparejamiento;
         this.jugadoresParticipan = jugadoresParticipan;
         this.nivel = nivel;
@@ -66,6 +74,7 @@ public class Partido {
         } else if (emparejamiento instanceof EmparejamientoPorNivel) {
             this.emparejamientoTipo = "nivel";
         }
+        this.creadorId = creadorId;
     }
 
     public Partido(Deporte deporte, int cantidadJugadores, int duracion, Ubicacion ubicacion, Date horario,
@@ -87,11 +96,9 @@ public class Partido {
 	public void cambiarEstado(EstadoPartido nuevo) {
         EstadoPartido estadoAnterior = this.estado;
         this.estado = nuevo;
-        System.out.println("++ Nuevo estado: " + this.getEstado());
-        System.out.println("-----------------------------------");
+        this.estadoNombre = nuevo.toString();
+        logger.info("Cambiando estado de {} a {}", estadoAnterior, nuevo);
         notifyObservers();
-
-        
         NotificacionRepository notificacionRepo = new NotificacionRepository();
         String mensaje = "El partido ha cambiado de estado a: " + nuevo.toString();
         String tipo = "ESTADO";
@@ -105,19 +112,24 @@ public class Partido {
     public void agregarJugador(Usuario jugador) {
         if (this.jugadoresParticipan.size() < this.cantidadJugadores) {
             jugadoresParticipan.add(jugador);
+            logger.info("Jugador agregado: {}. Total ahora: {}", jugador, jugadoresParticipan.size());
         } else {
-            System.out.println("El equipo está completo.");
+            logger.warn("El equipo está completo. No se puede agregar a {}", jugador);
         }
     }
 
     public void emparejarJugadores() {
+        logger.debug("Emparejando jugadores con estrategia: {}", emparejamiento);
         if (emparejamiento == null) {
+            logger.error("No se definió una estrategia de emparejamiento");
             throw new IllegalStateException("No se definió una estrategia de emparejamiento");
         }
         this.jugadoresParticipan = emparejamiento.emparejar(this, this.jugadoresParticipan);
+        logger.info("Jugadores emparejados: {}", jugadoresParticipan);
     }
 
     public void comentar(Usuario jugador, String mensaje) {
+        logger.info("{} comenta en el partido: {}", jugador, mensaje);
         this.getEstado().comentar(jugador, mensaje, this);
     }
 
@@ -169,6 +181,7 @@ public class Partido {
     			break;
     		}
     	}
+    	logger.debug("esParticipante: {} -> {}", jugador, res);
     	return res;
     }
 
@@ -177,15 +190,16 @@ public class Partido {
     }
     
     public String getCreadorPartido(Partido partido) {
-    	return partido.getJugadoresParticipan().get(0).toString();
+    	return partido.getCreadorId().toString();
     }
 
     public boolean esCreador(Usuario jugador) {
     	boolean res = false;
     	int jugadorCreador = 0;
-    	if (this.jugadoresParticipan.get(jugadorCreador).equals(jugador)) {
+    	if (!jugadoresParticipan.isEmpty() && this.jugadoresParticipan.get(jugadorCreador).getId().equals(jugador.getId())) {
     		res = true;
     	}
+    	logger.debug("esCreador: {} -> {}", jugador, res);
     	return res;
     }
 
@@ -296,5 +310,13 @@ public class Partido {
 
     public void setConfirmaciones(int confirmaciones) {
         this.confirmaciones = confirmaciones;
+    }
+
+    public Long getCreadorId() {
+        return creadorId;
+    }
+
+    public void setCreadorId(Long creadorId) {
+        this.creadorId = creadorId;
     }
 }

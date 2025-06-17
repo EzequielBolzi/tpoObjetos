@@ -4,12 +4,13 @@ import com.tpo.armarPartido.enums.Deporte;
 import com.tpo.armarPartido.enums.Nivel;
 import com.tpo.armarPartido.model.Partido;
 import com.tpo.armarPartido.model.Usuario;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class EmparejamientoPorNivel implements EstrategiaEmparejamiento {
+
     @Override
     public String toString() {
         return "Emparejamiento Por Niveles disponibles: ";
@@ -17,56 +18,54 @@ public class EmparejamientoPorNivel implements EstrategiaEmparejamiento {
 
     @Override
     public List<Usuario> emparejar(Partido partido, List<Usuario> jugadores) {
+        // El usuario por consola debe cargar el rango de niveles posibles.
+
         Scanner scanner = new Scanner(System.in);
         System.out.println(" -- Emparejamiento por Nivel");
-
-        // Mostrar niveles disponibles
         Nivel[] todosNiveles = Nivel.values();
-        for(int i = 0; i < todosNiveles.length; i++) {
+        for(int i = 0; i<todosNiveles.length; i++) {
             System.out.println(i + ": " + todosNiveles[i]);
         }
-
         System.out.print("Elige el índice para NIVEL_MIN: ");
         int NIVEL_MIN = scanner.nextInt();
         System.out.print("Elige el índice para NIVEL_MAX: ");
         int NIVEL_MAX = scanner.nextInt();
 
-        // Validar índices
+        // Siempre agrego al creador del partido.
+
+        Nivel nivelRequerido = partido.getNivel();
+        Deporte deporte = partido.getDeporte();
+        List<Usuario> jugadoresSeleccionados = new ArrayList<>();
+        int jugadorCreador = 0;
+        jugadoresSeleccionados.add(partido.getJugadoresParticipan().get(jugadorCreador));
+
         if (NIVEL_MIN < 0 || NIVEL_MAX >= todosNiveles.length || NIVEL_MIN > NIVEL_MAX) {
             System.out.println("Error: índices inválidos.");
-            return new ArrayList<>();
+            return jugadoresSeleccionados; //Si los indices estan mal, devuelvo lista con solo el jugador creador
         }
 
-        Deporte deporte = partido.getDeporte();
-        List<Usuario> seleccionados = new ArrayList<>();
+        //Agrego a los jugadores por emparejamiento de nivel
 
-        // Obtener los que ya están en el partido
-        List<Usuario> yaParticipan = partido.getJugadoresParticipan();
-        if (yaParticipan != null) {
-            seleccionados.addAll(yaParticipan);
+        for(int i=NIVEL_MAX; i >= NIVEL_MIN; i--) {
+            Nivel nivelActual = todosNiveles[i];
+            System.out.println("Verificando jugadores de nivel -> " + nivelActual);
+            for(Usuario jugador : jugadores) {
+                if (jugadoresSeleccionados.size() >= partido.getCantidadJugadores()) {
+                    break;
+                }
+                if (jugadoresSeleccionados.contains(jugador)) {
+                    continue; 
+                }
+                Nivel nivelJugador = jugador.getNivelesPorDeporte().get(deporte);
+                System.out.println("  Jugador " + jugador.getNombre() + " tiene nivel " + nivelJugador);
+                if (nivelJugador != null && nivelJugador == Nivel.values()[i]) {
+                    jugadoresSeleccionados.add(jugador);
+                    System.out.println("Emparejando Jugadores por Nivel " + jugador.getNombre() + " agregado.");
+                    
+                }
+            }
         }
-
-        // Calcular cuántos jugadores más necesitamos
-        int jugadoresNecesarios = partido.getCantidadJugadores() - seleccionados.size();
-        if (jugadoresNecesarios <= 0) {
-            return seleccionados.subList(0, partido.getCantidadJugadores());
-        }
-
-        // Filtrar jugadores disponibles que no estén ya agregados y que cumplan con el nivel
-        List<Usuario> jugadoresDisponibles = jugadores.stream()
-                .filter(jugador -> !seleccionados.contains(jugador))
-                .filter(jugador -> {
-                    Nivel nivelJugador = jugador.getNivelesPorDeporte().get(deporte);
-                    return nivelJugador != null &&
-                            nivelJugador.ordinal() >= NIVEL_MIN &&
-                            nivelJugador.ordinal() <= NIVEL_MAX;
-                })
-                .limit(jugadoresNecesarios)
-                .collect(Collectors.toList());
-
-        // Agregar los jugadores que cumplen con el criterio de nivel
-        seleccionados.addAll(jugadoresDisponibles);
-
-        return seleccionados;
+        return jugadoresSeleccionados;
     }
+
 }

@@ -55,6 +55,8 @@ public class ControllerPartido {
         List<iObserver> observadores = new ArrayList<>();
         observadores.add(notificadorMail);
         Partido nuevo = new Partido(deporte, cantidadJugadores, duracion, ubicacion, horario, estadoInicial, emparejamiento, listaJugadoresParticipan, nivel, observadores);
+        partidoRepository.save(nuevo);
+        nuevo.cambiarEstado(estadoInicial);
         if (emparejamiento instanceof EmparejamientoPorUbicacion) {
             nuevo.setEmparejamientoTipo("ubicacion");
         } else if (emparejamiento instanceof EmparejamientoPorNivel) {
@@ -118,7 +120,6 @@ public class ControllerPartido {
             partido.setJugadoresParticipan(seleccionados);
             if (partido.getJugadoresParticipan().size() >= partido.getCantidadJugadores()) {
                 partido.getEstado().armar(partido);
-                partido.setEstadoNombre(partido.getEstado().toString());
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
                 String fechaStr = partido.getHorario() != null ? new java.sql.Timestamp(partido.getHorario().getTime()).toLocalDateTime().format(formatter) : "fecha no especificada";
                 for (Usuario usuario : partido.getJugadoresParticipan()) {
@@ -135,7 +136,6 @@ public class ControllerPartido {
             } else {
                 System.out.println("No se pudo armar el partido: faltan jugadores online (seleccionados: " + seleccionados.size() + ")");
             }
-            partido.setEstadoNombre(partido.getEstado().toString());
             partidoRepository.save(partido);
             Partido refreshed = partidoRepository.findById(partido.getId());
             System.out.println("Estado del partido en base de datos tras guardar: " + (refreshed != null ? refreshed.getEstadoNombre() : "null"));
@@ -152,7 +152,6 @@ public class ControllerPartido {
             if(partido.esParticipante(jugador)) {
                 estadoActual.confirmar(partido);
                 estadoActual.getMessage(partido);
-                partido.setEstadoNombre(partido.getEstado().toString());
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
                 String fechaStr = partido.getHorario() != null ? new java.sql.Timestamp(partido.getHorario().getTime()).toLocalDateTime().format(formatter) : "fecha no especificada";
                 if ("Confirmacion".equalsIgnoreCase(partido.getEstadoNombre())) {
@@ -200,7 +199,6 @@ public class ControllerPartido {
                     estadoActual.comenzar(partido);
                     estadoActual.getMessage(partido);
                 }
-                partido.setEstadoNombre(partido.getEstado().toString());
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
                 String fechaStr = partido.getHorario() != null ? new java.sql.Timestamp(partido.getHorario().getTime()).toLocalDateTime().format(formatter) : "fecha no especificada";
                 String msg = String.format(
@@ -232,7 +230,6 @@ public class ControllerPartido {
                     estadoActual.finalizar(partido);
                     estadoActual.getMessage(partido);
                 }
-                partido.setEstadoNombre(partido.getEstado().toString());
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
                 String fechaStr = partido.getHorario() != null ? new java.sql.Timestamp(partido.getHorario().getTime()).toLocalDateTime().format(formatter) : "fecha no especificada";
                 String msg = String.format(
@@ -355,6 +352,7 @@ public class ControllerPartido {
         } else {
             return;
         }
+        EstadoPartido estadoInicial = new NecesitamosJugadores();
         crearPartido(
             partidoDTO.getDeporte(),
             partidoDTO.getCantidadJugadores(),
@@ -430,10 +428,12 @@ public class ControllerPartido {
     }
 
     public void crearPartido(Deporte deporte, int cantidadJugadores, int duracion, Ubicacion ubicacion, Date horario, EstrategiaEmparejamiento emparejamiento, Usuario usuarioCreador, Nivel nivel, List<Usuario> jugadoresParticipan) {
-        EstadoPartido estadoInicial = new NecesitamosJugadores();
         List<iObserver> observadores = new ArrayList<>();
         observadores.add(notificadorMail);
+        EstadoPartido estadoInicial = new NecesitamosJugadores();
         Partido nuevo = new Partido(deporte, cantidadJugadores, duracion, ubicacion, horario, estadoInicial, emparejamiento, jugadoresParticipan, nivel, observadores);
+        partidoRepository.save(nuevo);
+        nuevo.cambiarEstado(estadoInicial);
         if (emparejamiento instanceof EmparejamientoPorUbicacion) {
             nuevo.setEmparejamientoTipo("ubicacion");
         } else if (emparejamiento instanceof EmparejamientoPorNivel) {

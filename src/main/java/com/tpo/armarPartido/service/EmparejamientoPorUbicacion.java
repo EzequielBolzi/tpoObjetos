@@ -9,39 +9,57 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class EmparejamientoPorUbicacion implements EstrategiaEmparejamiento {
+
+    private static final int DISTANCIA_MAXIMA = 10;
+
     @Override
     public String toString() {
-        return "Emparejamiento Por Ubicación";
+        return "Emparejamiento Por Ubicacion";
     }
 
     @Override
     public List<Usuario> emparejar(Partido partido, List<Usuario> jugadores) {
-        Ubicacion ubicacionCentral = partido.getUbicacion();
-        List<Usuario> seleccionados = new ArrayList<>();
+        Ubicacion ubicacionPartido = partido.getUbicacion();
+        List<Usuario> jugadoresSeleccionados = new ArrayList<>();
 
-        // Obtener los que ya están en el partido
-        List<Usuario> yaParticipan = partido.getJugadoresParticipan();
-        if (yaParticipan != null) {
-            seleccionados.addAll(yaParticipan);
+        // Siempre agrego al creador del partido
+        int jugadorCreador = 0;
+        jugadoresSeleccionados.add(partido.getJugadoresParticipan().get(jugadorCreador));
+
+        // Filtrar y ordenar candidatos por cercanía
+        List<Usuario> candidatos = jugadores.stream()
+            .filter(j -> !jugadoresSeleccionados.contains(j))
+            .filter(j -> j.getUbicacion() != null)
+            .sorted(Comparator.comparingDouble(j -> calcularDistancia(ubicacionPartido, j.getUbicacion())))
+            .collect(Collectors.toList());
+
+        for (Usuario jugador : candidatos) {
+            double distancia = calcularDistancia(ubicacionPartido, jugador.getUbicacion());
+            if (jugadoresSeleccionados.size() >= partido.getCantidadJugadores()) {
+                break;
+            }
+            System.out.printf("Distancia entre partido (%s) y jugador %s (%s): %.2f\n",
+                ubicacionPartido.toString(),
+                jugador.getNombre(),
+                jugador.getUbicacion().toString(),
+                distancia
+            );
+
+            if (distancia <= DISTANCIA_MAXIMA) {
+                jugadoresSeleccionados.add(jugador);
+                System.out.println("✅ Jugador agregado por cercanía: " + jugador.getNombre());
+            } else {
+                System.out.println("❌ Jugador muy lejos: " + jugador.getNombre());
+            }
         }
 
-        // Calcular cuántos jugadores más necesitamos
-        int jugadoresNecesarios = partido.getCantidadJugadores() - seleccionados.size();
-        if (jugadoresNecesarios <= 0) {
-            return seleccionados.subList(0, partido.getCantidadJugadores());
-        }
+        return jugadoresSeleccionados;
+    }
 
-        // Filtrar jugadores disponibles que no estén ya agregados
-        List<Usuario> jugadoresDisponibles = jugadores.stream()
-                .filter(jugador -> !seleccionados.contains(jugador))
-                .sorted(Comparator.comparingDouble(j -> ubicacionCentral.distanciaCuadradoA(j.getUbicacion())))
-                .limit(jugadoresNecesarios)
-                .collect(Collectors.toList());
-
-        // Agregar los más cercanos
-        seleccionados.addAll(jugadoresDisponibles);
-
-        return seleccionados;
+    private double calcularDistancia(Ubicacion ubi1, Ubicacion ubi2) {
+        double x = ubi1.getLatitud() - ubi2.getLatitud();
+        double y = ubi1.getLongitud() - ubi2.getLongitud();
+        return Math.sqrt(x * x + y * y);
     }
 }
 

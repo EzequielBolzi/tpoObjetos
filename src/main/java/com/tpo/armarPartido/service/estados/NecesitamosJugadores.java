@@ -20,7 +20,7 @@ public class NecesitamosJugadores implements EstadoPartido {
 
 	@Override
     public void armar(Partido partido) {
-        if (partido.getJugadoresParticipan().size() == partido.getCantidadJugadores()) {
+        if (partido.getJugadoresParticipan().size() >= partido.getCantidadJugadores()) {
             partido.cambiarEstado(new PartidoArmado());
             System.out.println("El partido tiene todos los jugadores! Ya esta armado y listo para confirmar.");
         }

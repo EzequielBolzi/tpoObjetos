@@ -11,9 +11,15 @@ import com.tpo.armarPartido.model.Usuario;
 import utils.GenerarPartidos;
 import utils.GenerarUsuarios;
 import io.javalin.Javalin;
+import com.tpo.armarPartido.repository.UsuarioRepository;
+import com.tpo.armarPartido.repository.PartidoRepository;
+import com.tpo.armarPartido.DataInitializer;
 
 public class Main {
     public static void main(String[] args) {
+        UsuarioRepository usuarioRepo = new UsuarioRepository();
+        PartidoRepository partidoRepo = new PartidoRepository();
+        DataInitializer.init(usuarioRepo, partidoRepo);
         ControllerUsuario userController = new ControllerUsuario();
         ControllerPartido partidoController = new ControllerPartido();
         Javalin app = Javalin.create(config -> {
