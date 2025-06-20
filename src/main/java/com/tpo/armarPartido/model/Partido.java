@@ -50,13 +50,16 @@ public class Partido {
     private String estadoNombre;
     private String emparejamientoTipo; 
     private int confirmaciones;
-    private Long creadorId;
+    
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "creador_id")
+    private Usuario creadorUsuario;
 
     public Partido() {}
 
     public Partido(Deporte deporte, int cantidadJugadores, int duracion, Ubicacion ubicacion, Date horario,
                    EstadoPartido estado, EstrategiaEmparejamiento emparejamiento, List<Usuario> jugadoresParticipan,
-                   Nivel nivel) {
+                   Nivel nivel, Usuario creador) {
         this.deporte = deporte;
         this.cantidadJugadores = cantidadJugadores;
         this.duracion = duracion;
@@ -74,13 +77,13 @@ public class Partido {
         } else if (emparejamiento instanceof EmparejamientoPorNivel) {
             this.emparejamientoTipo = "nivel";
         }
-        this.creadorId = creadorId;
+        this.creadorUsuario = creador;
     }
 
     public Partido(Deporte deporte, int cantidadJugadores, int duracion, Ubicacion ubicacion, Date horario,
                    EstadoPartido estado, EstrategiaEmparejamiento emparejamiento, List<Usuario> jugadoresParticipan,
-                   Nivel nivel, List<com.tpo.armarPartido.service.iObserver> observers) {
-        this(deporte, cantidadJugadores, duracion, ubicacion, horario, estado, emparejamiento, jugadoresParticipan, nivel);
+                   Nivel nivel, List<com.tpo.armarPartido.service.iObserver> observers, Usuario creador) {
+        this(deporte, cantidadJugadores, duracion, ubicacion, horario, estado, emparejamiento, jugadoresParticipan, nivel, creador);
         if (observers != null) {
             this.observers = observers;
         }
@@ -189,18 +192,25 @@ public class Partido {
         this.jugadoresParticipan = jugadoresParticipan;
     }
     
-    public String getCreadorPartido(Partido partido) {
-    	return partido.getCreadorId().toString();
+    public Usuario getCreador() {
+        return this.creadorUsuario;
     }
 
     public boolean esCreador(Usuario jugador) {
-    	boolean res = false;
-    	int jugadorCreador = 0;
-    	if (!jugadoresParticipan.isEmpty() && this.jugadoresParticipan.get(jugadorCreador).getId().equals(jugador.getId())) {
-    		res = true;
-    	}
-    	logger.debug("esCreador: {} -> {}", jugador, res);
-    	return res;
+        if (this.creadorUsuario == null || jugador == null || jugador.getId() == null) {
+            logger.error("esCreador check failed due to nulls. Creador is null: {}. Jugador is null: {}. Jugador ID is null: {}",
+                this.creadorUsuario == null,
+                jugador == null,
+                jugador != null && jugador.getId() == null);
+            return false;
+        }
+        boolean esElCreador = this.creadorUsuario.getId().equals(jugador.getId());
+        logger.info("Checking esCreador: Partido ID={}, Creador in DB ID={}, Jugador to check ID={}. Match: {}",
+            this.id,
+            this.creadorUsuario.getId(),
+            jugador.getId(),
+            esElCreador);
+        return esElCreador;
     }
 
     public void setDeporte(Deporte deporte) {
@@ -312,11 +322,7 @@ public class Partido {
         this.confirmaciones = confirmaciones;
     }
 
-    public Long getCreadorId() {
-        return creadorId;
-    }
-
-    public void setCreadorId(Long creadorId) {
-        this.creadorId = creadorId;
+    public void setCreador(Usuario creador) {
+        this.creadorUsuario = creador;
     }
 }

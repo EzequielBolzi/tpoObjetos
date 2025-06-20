@@ -25,17 +25,14 @@ public class DTOMapper {
     
     public static Usuario toUsuario(UsuarioDTO dto, String contrasena) {
         if (dto == null) return null;
-        Usuario usuario = new Usuario(
-            dto.getNombre(),
-            dto.getCorreo(),
-            contrasena,
-            dto.getNivelesPorDeporte(),
-            dto.getMedioNotificacion(),
-            dto.getUbicacion()
-        );
-        if (dto.getId() != null) {
-            usuario.setId(dto.getId());
-        }
+        Usuario usuario = new Usuario();
+        usuario.setId(dto.getId());
+        usuario.setNombre(dto.getNombre());
+        usuario.setCorreo(dto.getCorreo());
+        usuario.setContrasena(contrasena);
+        usuario.setNivelesPorDeporte(dto.getNivelesPorDeporte());
+        usuario.setMedioNotificacion(dto.getMedioNotificacion());
+        usuario.setUbicacion(dto.getUbicacion());
         return usuario;
     }
 

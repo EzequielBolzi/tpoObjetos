@@ -54,7 +54,7 @@ public class ControllerPartido {
         listaJugadoresParticipan.add(usuarioCreador);
         List<iObserver> observadores = new ArrayList<>();
         observadores.add(notificadorMail);
-        Partido nuevo = new Partido(deporte, cantidadJugadores, duracion, ubicacion, horario, estadoInicial, emparejamiento, listaJugadoresParticipan, nivel, observadores);
+        Partido nuevo = new Partido(deporte, cantidadJugadores, duracion, ubicacion, horario, estadoInicial, emparejamiento, listaJugadoresParticipan, nivel, observadores, usuarioCreador);
         partidoRepository.save(nuevo);
         nuevo.cambiarEstado(estadoInicial);
         if (emparejamiento instanceof EmparejamientoPorUbicacion) {
@@ -400,6 +400,18 @@ public class ControllerPartido {
     public void comenzar(Long id, UsuarioDTO usuarioDTO, boolean overrideHorario) {
         Usuario jugador = DTOMapper.toUsuario(usuarioDTO, "");
         Partido partido = getPartidoPorID(id);
+        
+        if (partido != null && partido.getCreador() != null) {
+            System.out.println("DEBUG: Partido ID=" + partido.getId() + ", Creador fetched from DB: ID=" + partido.getCreador().getId() + ", Nombre=" + partido.getCreador().getNombre());
+        } else {
+            System.out.println("DEBUG: Partido o creador es nulo al cargarlo. Partido: " + (partido != null ? "cargado" : "null") + ", Creador: " + (partido != null && partido.getCreador() != null ? "cargado" : "null"));
+        }
+        if (jugador != null) {
+            System.out.println("DEBUG: Jugador from DTO: ID=" + jugador.getId() + ", Nombre=" + jugador.getNombre());
+        } else {
+            System.out.println("DEBUG: Jugador from DTO is null.");
+        }
+
         if (partido == null) return;
         comenzarPartido(id, jugador, overrideHorario);
     }
@@ -431,7 +443,7 @@ public class ControllerPartido {
         List<iObserver> observadores = new ArrayList<>();
         observadores.add(notificadorMail);
         EstadoPartido estadoInicial = new NecesitamosJugadores();
-        Partido nuevo = new Partido(deporte, cantidadJugadores, duracion, ubicacion, horario, estadoInicial, emparejamiento, jugadoresParticipan, nivel, observadores);
+        Partido nuevo = new Partido(deporte, cantidadJugadores, duracion, ubicacion, horario, estadoInicial, emparejamiento, jugadoresParticipan, nivel, observadores, usuarioCreador);
         partidoRepository.save(nuevo);
         nuevo.cambiarEstado(estadoInicial);
         if (emparejamiento instanceof EmparejamientoPorUbicacion) {

@@ -46,7 +46,11 @@ public class PartidoArmado implements EstadoPartido {
 
     @Override
     public String getMessage(Partido partido) {
-        return String.format(mensaje, partido.getDeporte(), partido.getNivel(), partido.getCreadorPartido(partido));
+        String nombreCreador = "N/A";
+        if (partido.getCreador() != null) {
+            nombreCreador = partido.getCreador().getNombre();
+        }
+        return String.format(mensaje, partido.getDeporte(), partido.getNivel(), nombreCreador);
     }
 
 	@Override
