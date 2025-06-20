@@ -266,20 +266,21 @@ public class ControllerPartido {
         Partido partido = getPartidoPorID(id);
         return partido != null ? DTOMapper.toPartidoDTO(partido) : null;
     }
-    
+
     public void comentarPartido(Long id, Usuario jugador, String comentario) {
         Partido partido = getPartidoPorID(id);
         if (partido != null) {
             EstadoPartido estadoActual = partido.getEstado();
+            Usuario jugadorDB = usuarioRepository.findByCorreo(jugador.getCorreo());
+            if (jugadorDB == null) {
+                System.err.println("No se encontró el usuario para comentar: " + jugador.getCorreo());
+                return;
+            }
             if(estadoActual.toString().equalsIgnoreCase("Finalizado")) {
                 if(partido.esParticipante(jugador)) {
                     partido.comentar(jugador, comentario);
                     partidoRepository.save(partido);
-                    Usuario jugadorDB = new com.tpo.armarPartido.repository.UsuarioRepository().findByCorreo(jugador.getCorreo());
-                    if (jugadorDB == null) {
-                        System.err.println("No se encontró el usuario para comentar: " + jugador.getCorreo());
-                        return;
-                    }
+
                     Comentario nuevoComentario = new Comentario(jugadorDB, comentario, partido);
                     comentarioRepository.save(nuevoComentario);
                     System.out.println("El jugador " + jugadorDB.getNombre() + " dejó el siguiente comentario: " + comentario);

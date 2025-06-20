@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public class EmparejamientoPorUbicacion implements EstrategiaEmparejamiento {
 
-    private static final int DISTANCIA_MAXIMA = 10;
+    private static final int DISTANCIA_MAXIMA = 100;
 
     @Override
     public String toString() {
