@@ -424,6 +424,51 @@ public class ControllerPartido {
         finalizarPartido(id, jugador, overrideHorario);
     }
 
+    public void cancelarPartido(Long id, Usuario jugador) {
+        Partido partido = getPartidoPorID(id);
+        if (partido != null) {
+            if (partido.esCreador(jugador)) {
+                EstadoPartido estadoActual = partido.getEstado();
+                estadoActual.cancelar(partido);
+                
+                // Enviar notificaciones a todos los participantes
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                String fechaStr = partido.getHorario() != null ? 
+                    new java.sql.Timestamp(partido.getHorario().getTime()).toLocalDateTime().format(formatter) : 
+                    "fecha no especificada";
+                
+                for (Usuario usuario : partido.getJugadoresParticipan()) {
+                    String msg = String.format(
+                        "Hola %s! El partido de %s programado para el %s ha sido CANCELADO por el organizador.\n%s\nDisculpa las molestias.",
+                        usuario.getNombre(),
+                        partido.getDeporte(),
+                        fechaStr,
+                        getGoogleMapsAnchor(partido.getUbicacion())
+                    );
+                    notificacionService.notificarPorMedio(msg, usuario);
+                }
+                
+                partidoRepository.save(partido);
+                System.out.println("Partido " + id + " cancelado por " + jugador.getNombre());
+            } else {
+                System.err.println("El usuario " + jugador.getNombre() + " que intenta cancelar no es el creador del partido");
+                throw new RuntimeException("Solo el creador del partido puede cancelarlo");
+            }
+        } else {
+            System.err.println("Partido no encontrado con ID: " + id);
+            throw new RuntimeException("Partido no encontrado");
+        }
+    }
+
+    public void cancelar(Long id, UsuarioDTO usuarioDTO) {
+        Usuario usuario = usuarioRepository.findByCorreo(usuarioDTO.getCorreo());
+        if (usuario != null) {
+            cancelarPartido(id, usuario);
+        } else {
+            throw new RuntimeException("Usuario no encontrado");
+        }
+    }
+
     public void comentar(Long id, ComentarioRequest comentarioRequest) {
         Usuario jugador = DTOMapper.toUsuario(comentarioRequest.getUsuario(), "");
         Partido partido = getPartidoPorID(id);

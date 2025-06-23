@@ -9,6 +9,8 @@ import com.tpo.armarPartido.enums.Nivel;
 import io.javalin.Javalin;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
 
 public class ApiEndpoints {
     public static void register(Javalin app, ControllerUsuario userController, ControllerPartido partidoController) {
@@ -169,6 +171,22 @@ public class ApiEndpoints {
             boolean overrideHorario = overrideParam != null ? Boolean.parseBoolean(overrideParam) : false;
             partidoController.finalizar(id, usuarioDTO, overrideHorario);
             ctx.status(200);
+        });
+
+        // Cancelar un partido (solo el creador puede hacerlo)
+        app.post("/api/partidos/{id}/cancelar", ctx -> {
+            Long id = Long.valueOf(ctx.pathParam("id"));
+            UsuarioDTO usuarioDTO = ctx.bodyAsClass(UsuarioDTO.class);
+            try {
+                partidoController.cancelar(id, usuarioDTO);
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Partido cancelado exitosamente");
+                ctx.status(200).json(response);
+            } catch (RuntimeException e) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", e.getMessage());
+                ctx.status(400).json(errorResponse);
+            }
         });
 
         // Comentar un partido (solo participantes y si el partido está finalizado)
