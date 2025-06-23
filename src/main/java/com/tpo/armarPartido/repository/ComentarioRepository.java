@@ -57,4 +57,20 @@ public class ComentarioRepository {
             em.close();
         }
     }
+
+    public void deleteByPartido(Long partidoId) {
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            int deletedCount = em.createQuery("DELETE FROM Comentario c WHERE c.partido.id = :partidoId")
+                .setParameter("partidoId", partidoId)
+                .executeUpdate();
+            tx.commit();
+            System.out.println("Eliminados " + deletedCount + " comentarios del partido " + partidoId);
+        } finally {
+            if (tx.isActive()) tx.rollback();
+            em.close();
+        }
+    }
 } 

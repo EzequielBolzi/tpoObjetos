@@ -16,6 +16,7 @@ import com.tpo.armarPartido.model.Notificacion;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.tpo.armarPartido.exception.JugadorYaParticipaException;
 
 @Entity
 public class Partido {
@@ -113,12 +114,27 @@ public class Partido {
     }
 
     public void agregarJugador(Usuario jugador) {
-        if (this.jugadoresParticipan.size() < this.cantidadJugadores) {
-            jugadoresParticipan.add(jugador);
-            logger.info("Jugador agregado: {}. Total ahora: {}", jugador, jugadoresParticipan.size());
-        } else {
-            logger.warn("El equipo está completo. No se puede agregar a {}", jugador);
+        if (jugador == null) {
+            logger.error("No se puede agregar un jugador nulo");
+            throw new IllegalArgumentException("El jugador no puede ser nulo");
         }
+        
+        // Verificar si el jugador ya está en el partido
+        if (esParticipante(jugador)) {
+            logger.warn("El jugador {} ya participa en el partido {}", jugador.getNombre(), this.id);
+            throw new JugadorYaParticipaException(jugador.getNombre(), this.id);
+        }
+        
+        // Verificar si hay espacio en el partido
+        if (this.jugadoresParticipan.size() >= this.cantidadJugadores) {
+            logger.warn("El equipo está completo. No se puede agregar a {}", jugador.getNombre());
+            throw new IllegalStateException("El partido ya tiene el máximo de jugadores permitidos");
+        }
+        
+        // Agregar el jugador
+        jugadoresParticipan.add(jugador);
+        logger.info("Jugador {} agregado al partido {}. Total ahora: {}", 
+                   jugador.getNombre(), this.id, jugadoresParticipan.size());
     }
 
     public void emparejarJugadores() {
@@ -177,15 +193,39 @@ public class Partido {
     }
     
     public boolean esParticipante(Usuario jugador) {
-    	boolean res = false;
-    	for(Usuario usuario: jugadoresParticipan) {
-    		if(usuario.equals(jugador)) {
-    			res = true;
-    			break;
-    		}
-    	}
-    	logger.debug("esParticipante: {} -> {}", jugador, res);
-    	return res;
+        if (jugador == null || jugador.getCorreo() == null) {
+            logger.warn("esParticipante: jugador o correo es null");
+            return false;
+        }
+        
+        if (jugadoresParticipan == null) {
+            logger.warn("esParticipante: lista de jugadores es null");
+            return false;
+        }
+        
+        logger.debug("esParticipante: verificando jugador {} (correo: {}) en partido {} con {} jugadores", 
+                    jugador.getNombre(), jugador.getCorreo(), this.id, jugadoresParticipan.size());
+        
+        boolean res = false;
+        for (Usuario usuario : jugadoresParticipan) {
+            if (usuario == null || usuario.getCorreo() == null) {
+                logger.warn("esParticipante: usuario en lista es null o sin correo, saltando");
+                continue;
+            }
+            
+            logger.debug("esParticipante: comparando correo {} con {}", 
+                        jugador.getCorreo(), usuario.getCorreo());
+            
+            // Comparar por correo (case-insensitive)
+            if (jugador.getCorreo().equalsIgnoreCase(usuario.getCorreo())) {
+                res = true;
+                logger.debug("esParticipante: MATCH encontrado por correo");
+                break;
+            }
+        }
+        
+        logger.debug("esParticipante: {} -> {}", jugador.getNombre(), res);
+        return res;
     }
 
     public void setJugadoresParticipan(List<Usuario> jugadoresParticipan) {

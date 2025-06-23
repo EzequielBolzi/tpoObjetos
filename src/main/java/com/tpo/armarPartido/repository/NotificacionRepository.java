@@ -57,4 +57,20 @@ public class NotificacionRepository {
             em.close();
         }
     }
+
+    public void deleteByPartido(Long partidoId) {
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            int deletedCount = em.createQuery("DELETE FROM Notificacion n WHERE n.partido.id = :partidoId")
+                .setParameter("partidoId", partidoId)
+                .executeUpdate();
+            tx.commit();
+            System.out.println("Eliminadas " + deletedCount + " notificaciones del partido " + partidoId);
+        } finally {
+            if (tx.isActive()) tx.rollback();
+            em.close();
+        }
+    }
 } 

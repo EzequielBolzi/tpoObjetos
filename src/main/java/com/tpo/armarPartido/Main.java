@@ -14,6 +14,7 @@ import io.javalin.Javalin;
 import com.tpo.armarPartido.repository.UsuarioRepository;
 import com.tpo.armarPartido.repository.PartidoRepository;
 import com.tpo.armarPartido.DataInitializer;
+import com.tpo.armarPartido.exception.GlobalExceptionHandler;
 
 public class Main {
     public static void main(String[] args) {
@@ -25,6 +26,9 @@ public class Main {
         Javalin app = Javalin.create(config -> {
             config.http.defaultContentType = "application/json";
         }).start(8080);
+
+        // Configurar manejador global de excepciones
+        GlobalExceptionHandler.configure(app);
 
         ApiEndpoints.register(app, userController, partidoController);
     }

@@ -8,6 +8,8 @@ import com.tpo.armarPartido.enums.Nivel;
 import com.tpo.armarPartido.model.Ubicacion;
 import com.tpo.armarPartido.model.Usuario;
 import com.tpo.armarPartido.repository.UsuarioRepository;
+import com.tpo.armarPartido.exception.ValidationException;
+import com.tpo.armarPartido.exception.UsuarioNotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +23,34 @@ public class ControllerUsuario {
         this.usuarioRepository = new UsuarioRepository();
     }
 
+    private void validarCamposUsuario(String nombre, String correo, String contrasena, 
+                                     MedioNotificacion medioNotificacion, Ubicacion ubicacion) {
+        List<String> errores = new ArrayList<>();
+        
+        if (nombre == null || nombre.trim().isEmpty()) {
+            errores.add("El nombre no puede estar vacío");
+        }
+        if (correo == null || correo.trim().isEmpty()) {
+            errores.add("El correo no puede estar vacío");
+        }
+        if (contrasena == null || contrasena.trim().isEmpty()) {
+            errores.add("La contraseña no puede estar vacía");
+        }
+        if (medioNotificacion == null) {
+            errores.add("El medio de notificación no puede estar vacío");
+        }
+        if (ubicacion == null) {
+            errores.add("La ubicación no puede estar vacía");
+        }
+        
+        if (!errores.isEmpty()) {
+            throw new ValidationException("Errores de validación en usuario", errores);
+        }
+    }
+
     public void crearUsuario(UsuarioDTO usuarioDTO, String contrasena) {
+        validarCamposUsuario(usuarioDTO.getNombre(), usuarioDTO.getCorreo(), contrasena, 
+                           usuarioDTO.getMedioNotificacion(), usuarioDTO.getUbicacion());
         Usuario nuevo = DTOMapper.toUsuario(usuarioDTO, contrasena);
         usuarioRepository.save(nuevo);
         System.out.println("Se creó el usuario: " + nuevo.getNombre());
@@ -30,6 +59,7 @@ public class ControllerUsuario {
     public void crearUsuario(String nombre, String correo, String contrasena,
                              Map<Deporte, Nivel> nivelesPorDeporte,
                              MedioNotificacion medioNotificacion, Ubicacion ubicacion) {
+        validarCamposUsuario(nombre, correo, contrasena, medioNotificacion, ubicacion);
         Usuario nuevo = new Usuario(nombre, correo, contrasena, nivelesPorDeporte, medioNotificacion, ubicacion);
         usuarioRepository.save(nuevo);
         System.out.println("Se creó el usuario: " + nuevo.getNombre());
@@ -40,6 +70,8 @@ public class ControllerUsuario {
         if (usuario != null) {
             usuarioRepository.delete(usuario);
             System.out.println("Usuario eliminado: " + usuario.getNombre());
+        } else {
+            throw new UsuarioNotFoundException(correo);
         }
     }
 
@@ -50,6 +82,8 @@ public class ControllerUsuario {
             actualizado.setId(usuarioExistente.getId());
             usuarioRepository.save(actualizado);
             System.out.println("Usuario modificado: " + actualizado.getNombre());
+        } else {
+            throw new UsuarioNotFoundException("No se puede modificar", correo);
         }
     }
 
@@ -59,6 +93,8 @@ public class ControllerUsuario {
             usuarioModificado.setId(usuarioExistente.getId());
             usuarioRepository.save(usuarioModificado);
             System.out.println("Usuario modificado: " + usuarioModificado.getNombre());
+        } else {
+            throw new UsuarioNotFoundException("No se puede modificar", correo);
         }
     }
 
@@ -81,6 +117,8 @@ public class ControllerUsuario {
             usuario.getNivelesPorDeporte().put(deporteNuevo, nivelDeDeporte);
             usuarioRepository.save(usuario);
             System.out.println("Se agregó a " + usuario.getNombre() + " el deporte " + deporteNuevo + " con el nivel " + nivelDeDeporte);
+        } else {
+            throw new UsuarioNotFoundException("No se puede agregar deporte", correo);
         }
     }
     

@@ -19,6 +19,11 @@ import utils.*;
 import com.tpo.armarPartido.repository.PartidoRepository;
 import com.tpo.armarPartido.repository.ComentarioRepository;
 import com.tpo.armarPartido.repository.NotificacionRepository;
+import com.tpo.armarPartido.exception.ValidationException;
+import com.tpo.armarPartido.exception.PartidoNotFoundException;
+import com.tpo.armarPartido.exception.UsuarioNotFoundException;
+import com.tpo.armarPartido.exception.UnauthorizedException;
+import com.tpo.armarPartido.exception.PartidoInvalidoException;
 
 public class ControllerPartido {
 	
@@ -46,6 +51,44 @@ public class ControllerPartido {
         this.notificacionService = new NotificacionService(
             java.util.Arrays.asList(notificadorMail, notificadorSMS)
         );
+    }
+
+    private void validarPartido(PartidoDTO partidoDTO) {
+        List<String> errores = new ArrayList<>();
+        
+        // Validar que el nombre no esté vacío (usando el primer jugador como creador)
+        if (partidoDTO.getJugadoresParticipan() == null || partidoDTO.getJugadoresParticipan().isEmpty()) {
+            errores.add("Debe haber al menos un jugador participante");
+        } else {
+            UsuarioDTO primerJugador = partidoDTO.getJugadoresParticipan().get(0);
+            if (primerJugador.getNombre() == null || primerJugador.getNombre().trim().isEmpty()) {
+                errores.add("El nombre del creador no puede estar vacío");
+            }
+        }
+        
+        // Validar coordenadas
+        if (partidoDTO.getUbicacion() != null) {
+            double latitud = partidoDTO.getUbicacion().getLatitud();
+            double longitud = partidoDTO.getUbicacion().getLongitud();
+            
+            if (latitud < -90 || latitud > 90) {
+                errores.add("La latitud debe estar entre -90 y 90");
+            }
+            if (longitud < -180 || longitud > 180) {
+                errores.add("La longitud debe estar entre -180 y 180");
+            }
+        } else {
+            errores.add("La ubicación no puede estar vacía");
+        }
+        
+        // Validar duración
+        if (partidoDTO.getDuracion() <= 0) {
+            errores.add("La duración debe ser positiva");
+        }
+        
+        if (!errores.isEmpty()) {
+            throw new PartidoInvalidoException("Datos del partido inválidos", errores);
+        }
     }
 
     public void crearPartido(Deporte deporte, int cantidadJugadores, int duracion, Ubicacion ubicacion, Date horario, EstrategiaEmparejamiento emparejamiento, Usuario usuarioCreador, Nivel nivel) {
@@ -329,6 +372,8 @@ public class ControllerPartido {
     }
 
     public void crearPartido(PartidoDTO partidoDTO, String emparejamiento) {
+        validarPartido(partidoDTO);
+        
         if (partidoDTO.getJugadoresParticipan() == null || partidoDTO.getJugadoresParticipan().isEmpty()) {
             return;
         }
@@ -370,31 +415,46 @@ public class ControllerPartido {
     public void eliminarPartido(Long id) {
         Partido partido = getPartidoPorID(id);
         if (partido != null) {
+            // Eliminar notificaciones relacionadas primero
+            notificacionRepository.deleteByPartido(id);
+            
+            // Eliminar comentarios relacionados
+            comentarioRepository.deleteByPartido(id);
+            
+            // Finalmente eliminar el partido
             partidoRepository.delete(partido);
+            System.out.println("Partido eliminado: " + partido.getId());
+        } else {
+            throw new PartidoNotFoundException(id);
         }
     }
 
     public void agregarJugador(Long id, UsuarioDTO usuarioDTO) {
         Usuario jugador = new com.tpo.armarPartido.repository.UsuarioRepository().findByCorreo(usuarioDTO.getCorreo());
         if (jugador == null) {
-            System.err.println("No se encontró el usuario: " + usuarioDTO.getCorreo());
-            return;
+            throw new UsuarioNotFoundException("No se encontró el usuario", usuarioDTO.getCorreo());
         }
         Partido partido = getPartidoPorID(id);
-        if (partido == null) return;
+        if (partido == null) {
+            throw new PartidoNotFoundException("No se puede agregar jugador", id);
+        }
         agregarJugadorAPartido(id, jugador);
     }
 
     public void armar(Long id) {
         Partido partido = getPartidoPorID(id);
-        if (partido == null) return;
+        if (partido == null) {
+            throw new PartidoNotFoundException("No se puede armar", id);
+        }
         armarPartido(id);
     }
 
     public void confirmar(Long id, UsuarioDTO usuarioDTO) {
         Usuario jugador = DTOMapper.toUsuario(usuarioDTO, "");
         Partido partido = getPartidoPorID(id);
-        if (partido == null) return;
+        if (partido == null) {
+            throw new PartidoNotFoundException("No se puede confirmar", id);
+        }
         confirmarPartido(id, jugador);
     }
 
@@ -413,14 +473,18 @@ public class ControllerPartido {
             System.out.println("DEBUG: Jugador from DTO is null.");
         }
 
-        if (partido == null) return;
+        if (partido == null) {
+            throw new PartidoNotFoundException("No se puede comenzar", id);
+        }
         comenzarPartido(id, jugador, overrideHorario);
     }
 
     public void finalizar(Long id, UsuarioDTO usuarioDTO, boolean overrideHorario) {
         Usuario jugador = DTOMapper.toUsuario(usuarioDTO, "");
         Partido partido = getPartidoPorID(id);
-        if (partido == null) return;
+        if (partido == null) {
+            throw new PartidoNotFoundException("No se puede finalizar", id);
+        }
         finalizarPartido(id, jugador, overrideHorario);
     }
 
@@ -451,12 +515,10 @@ public class ControllerPartido {
                 partidoRepository.save(partido);
                 System.out.println("Partido " + id + " cancelado por " + jugador.getNombre());
             } else {
-                System.err.println("El usuario " + jugador.getNombre() + " que intenta cancelar no es el creador del partido");
-                throw new RuntimeException("Solo el creador del partido puede cancelarlo");
+                throw new UnauthorizedException("cancelar partido", jugador.getNombre());
             }
         } else {
-            System.err.println("Partido no encontrado con ID: " + id);
-            throw new RuntimeException("Partido no encontrado");
+            throw new PartidoNotFoundException(id);
         }
     }
 
@@ -465,14 +527,16 @@ public class ControllerPartido {
         if (usuario != null) {
             cancelarPartido(id, usuario);
         } else {
-            throw new RuntimeException("Usuario no encontrado");
+            throw new UsuarioNotFoundException("No se puede cancelar", usuarioDTO.getCorreo());
         }
     }
 
     public void comentar(Long id, ComentarioRequest comentarioRequest) {
         Usuario jugador = DTOMapper.toUsuario(comentarioRequest.getUsuario(), "");
         Partido partido = getPartidoPorID(id);
-        if (partido == null) return;
+        if (partido == null) {
+            throw new PartidoNotFoundException("No se puede comentar", id);
+        }
         comentarPartido(id, jugador, comentarioRequest.getComentario());
     }
 
