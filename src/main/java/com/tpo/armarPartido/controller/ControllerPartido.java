@@ -12,6 +12,7 @@ import com.tpo.armarPartido.dto.UsuarioDTO;
 import com.tpo.armarPartido.dto.DTOMapper;
 import com.tpo.armarPartido.enums.*;
 import com.tpo.armarPartido.model.*;
+import com.tpo.armarPartido.model.Notificador;
 import com.tpo.armarPartido.repository.UsuarioRepository;
 import com.tpo.armarPartido.service.*;
 import com.tpo.armarPartido.service.estados.*;
@@ -35,6 +36,7 @@ public class ControllerPartido {
     private NotificacionService notificacionService;
     private NotificadorMail notificadorMail;
     private NotificadorSMS notificadorSMS;
+    private Notificador notificador;
 
     public ControllerPartido() {
         this.usuarioRepository = new UsuarioRepository();
@@ -46,6 +48,7 @@ public class ControllerPartido {
             "uadetpoturnonoche@gmail.com",
             "lkez jakv inbj epxg"
         );
+        this.notificador = new Notificador();
         this.notificadorMail = new NotificadorMail(adapterMail);
         this.notificadorSMS = new NotificadorSMS();
         this.notificacionService = new NotificacionService(
@@ -96,7 +99,7 @@ public class ControllerPartido {
         List<Usuario> listaJugadoresParticipan = new ArrayList<Usuario>();
         listaJugadoresParticipan.add(usuarioCreador);
         List<iObserver> observadores = new ArrayList<>();
-        observadores.add(notificadorMail);
+        observadores.add(notificador);
         Partido nuevo = new Partido(deporte, cantidadJugadores, duracion, ubicacion, horario, estadoInicial, emparejamiento, listaJugadoresParticipan, nivel, observadores, usuarioCreador);
         partidoRepository.save(nuevo);
         nuevo.cambiarEstado(estadoInicial);
@@ -153,7 +156,7 @@ public class ControllerPartido {
     }
     
     // Metodos de estado
-        public void armarPartido(Long id) {
+    public void armarPartido(Long id) {
         Partido partido = getPartidoPorID(id);
         if (partido != null && partido.getEmparejamiento() != null) {
             // Restaura los observadores después de cargar desde la base de datos
