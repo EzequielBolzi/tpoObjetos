@@ -103,6 +103,7 @@ public class Partido {
         this.estadoNombre = nuevo.toString();
         logger.info("Cambiando estado de {} a {}", estadoAnterior, nuevo);
         notifyObservers();
+        //Guarda el estado en la base de datos
         NotificacionRepository notificacionRepo = new NotificacionRepository();
         String mensaje = "El partido ha cambiado de estado a: " + nuevo.toString();
         String tipo = "ESTADO";

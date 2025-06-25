@@ -13,6 +13,7 @@ import com.tpo.armarPartido.dto.DTOMapper;
 import com.tpo.armarPartido.enums.*;
 import com.tpo.armarPartido.model.*;
 import com.tpo.armarPartido.model.Notificador;
+import com.tpo.armarPartido.service.AdapterNotificacionMail;
 import com.tpo.armarPartido.repository.UsuarioRepository;
 import com.tpo.armarPartido.service.*;
 import com.tpo.armarPartido.service.estados.*;
@@ -27,15 +28,12 @@ import com.tpo.armarPartido.exception.UnauthorizedException;
 import com.tpo.armarPartido.exception.PartidoInvalidoException;
 
 public class ControllerPartido {
-	
+
     private final PartidoRepository partidoRepository;
     private final ComentarioRepository comentarioRepository;
     private final NotificacionRepository notificacionRepository;
     private final UsuarioRepository usuarioRepository;
-    private AdapterMail adapterMail;
-    private NotificacionService notificacionService;
-    private NotificadorMail notificadorMail;
-    private NotificadorSMS notificadorSMS;
+    private AdapterNotificacionMail adapterNotificacionMail;
     private Notificador notificador;
 
     public ControllerPartido() {
@@ -43,22 +41,17 @@ public class ControllerPartido {
         this.partidoRepository = new PartidoRepository();
         this.comentarioRepository = new ComentarioRepository();
         this.notificacionRepository = new NotificacionRepository();
-        this.adapterMail = new AdapterMail(
-            "uadetpoturnonoche@gmail.com", // correo de origen para notificaciones
-            "uadetpoturnonoche@gmail.com",
-            "lkez jakv inbj epxg"
+        this.adapterNotificacionMail = new AdapterMail(
+                "uadetpoturnonoche@gmail.com", // correo de origen para notificaciones
+                "uadetpoturnonoche@gmail.com",
+                "lkez jakv inbj epxg"
         );
-        this.notificador = new Notificador();
-        this.notificadorMail = new NotificadorMail(adapterMail);
-        this.notificadorSMS = new NotificadorSMS();
-        this.notificacionService = new NotificacionService(
-            java.util.Arrays.asList(notificadorMail, notificadorSMS)
-        );
+        this.notificador = new Notificador(adapterNotificacionMail);
     }
 
     private void validarPartido(PartidoDTO partidoDTO) {
         List<String> errores = new ArrayList<>();
-        
+
         // Validar que el nombre no esté vacío (usando el primer jugador como creador)
         if (partidoDTO.getJugadoresParticipan() == null || partidoDTO.getJugadoresParticipan().isEmpty()) {
             errores.add("Debe haber al menos un jugador participante");
@@ -68,12 +61,12 @@ public class ControllerPartido {
                 errores.add("El nombre del creador no puede estar vacío");
             }
         }
-        
+
         // Validar coordenadas
         if (partidoDTO.getUbicacion() != null) {
             double latitud = partidoDTO.getUbicacion().getLatitud();
             double longitud = partidoDTO.getUbicacion().getLongitud();
-            
+
             if (latitud < -90 || latitud > 90) {
                 errores.add("La latitud debe estar entre -90 y 90");
             }
@@ -83,12 +76,12 @@ public class ControllerPartido {
         } else {
             errores.add("La ubicación no puede estar vacía");
         }
-        
+
         // Validar duración
         if (partidoDTO.getDuracion() <= 0) {
             errores.add("La duración debe ser positiva");
         }
-        
+
         if (!errores.isEmpty()) {
             throw new PartidoInvalidoException("Datos del partido inválidos", errores);
         }
@@ -111,7 +104,7 @@ public class ControllerPartido {
         partidoRepository.save(nuevo);
         System.out.println("Se creó un nuevo partido de " + nuevo.getDeporte());
     }
-    
+
     public List<Partido> buscarMasCercanos(List<Partido> listaPartidos, Ubicacion ubicacionCentral, int cantidadPartidos) {
         if (ubicacionCentral == null) {
             throw new IllegalArgumentException("La ubicación central no puede ser nula");
@@ -129,11 +122,11 @@ public class ControllerPartido {
         utilsPartido.printPartidos(partidosCercanos);
         return partidosCercanos;
     }
-    
+
     public Partido getPartidoPorID(Long id) {
-    	return partidoRepository.findById(id);
+        return partidoRepository.findById(id);
     }
-    
+
     public void agregarJugadorAPartido(Long idPartido, Usuario jugadorNuevo) {
         Partido partido = getPartidoPorID(idPartido);
         if (partido != null) {
@@ -143,48 +136,36 @@ public class ControllerPartido {
             System.out.println("-----------------------------------");
         }
     }
-    
+
     public void printEstadoPartidoID (Long id) {
-    	Partido partido = getPartidoPorID(id);
-    	if (partido != null) {
-    		System.out.println(partido.getEstado()); 
-    	}
+        Partido partido = getPartidoPorID(id);
+        if (partido != null) {
+            System.out.println(partido.getEstado());
+        }
     }
-    
+
     public Partido getPartidoID(Long id) {
-    	return getPartidoPorID(id);
+        return getPartidoPorID(id);
     }
-    
+
     // Metodos de estado
     public void armarPartido(Long id) {
+        //cambiar el estado
         Partido partido = getPartidoPorID(id);
         if (partido != null && partido.getEmparejamiento() != null) {
             // Restaura los observadores después de cargar desde la base de datos
-            partido.resetObservers(java.util.Collections.singletonList(notificadorMail));
+            partido.resetObservers(java.util.Collections.singletonList(notificador));
             List<Usuario> todosLosUsuarios = usuarioRepository.findAll();
             List<Usuario> seleccionados = partido.getEmparejamiento().emparejar(partido, todosLosUsuarios);
             partido.setJugadoresParticipan(seleccionados);
             if (partido.getJugadoresParticipan().size() >= partido.getCantidadJugadores()) {
-                partido.getEstado().armar(partido);
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-                String fechaStr = partido.getHorario() != null ? new java.sql.Timestamp(partido.getHorario().getTime()).toLocalDateTime().format(formatter) : "fecha no especificada";
-                for (Usuario usuario : partido.getJugadoresParticipan()) {
-                    String msg = String.format(
-                        "Hola %s! El partido de %s ha sido armado y está listo para confirmar.\nFecha y hora: %s\n%s\nPor favor, confirma tu participación.",
-                        usuario.getNombre(),
-                        partido.getDeporte(),
-                        fechaStr,
-                        getGoogleMapsAnchor(partido.getUbicacion())
-                    );
-                    notificacionService.notificarPorMedio(msg, usuario);
-                    System.out.println("Notificación enviada a: " + usuario.getCorreo());
-                }
+                partido.getEstado().armar(partido); //cambiando estado - esto notifica automáticamente via Observer
+                partidoRepository.save(partido);
+                Partido refreshed = partidoRepository.findById(partido.getId());
+                System.out.println("Estado del partido en base de datos tras guardar: " + (refreshed != null ? refreshed.getEstadoNombre() : "null"));
             } else {
                 System.out.println("No se pudo armar el partido: faltan jugadores online (seleccionados: " + seleccionados.size() + ")");
             }
-            partidoRepository.save(partido);
-            Partido refreshed = partidoRepository.findById(partido.getId());
-            System.out.println("Estado del partido en base de datos tras guardar: " + (refreshed != null ? refreshed.getEstadoNombre() : "null"));
             System.out.println("-----------------------------------");
         } else {
             System.out.println("No se pudo armar el partido: partido o emparejamiento nulo para id: " + id);
@@ -193,38 +174,12 @@ public class ControllerPartido {
 
     public void confirmarPartido(Long id, Usuario jugador) {
         Partido partido = getPartidoPorID(id);
+        partido.resetObservers(java.util.Collections.singletonList(notificador));
         if (partido != null) {
             EstadoPartido estadoActual = partido.getEstado();
             if(partido.esParticipante(jugador)) {
-                estadoActual.confirmar(partido);
+                estadoActual.confirmar(partido); // Esto notifica automáticamente via Observer
                 estadoActual.getMessage(partido);
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-                String fechaStr = partido.getHorario() != null ? new java.sql.Timestamp(partido.getHorario().getTime()).toLocalDateTime().format(formatter) : "fecha no especificada";
-                if ("Confirmacion".equalsIgnoreCase(partido.getEstadoNombre())) {
-                    for (Usuario usuario : partido.getJugadoresParticipan()) {
-                        String msg = String.format(
-                            "Hola %s! El partido de %s ha sido confirmado para el %s.\n%s\n¡Prepárate para jugar!",
-                            usuario.getNombre(),
-                            partido.getDeporte(),
-                            fechaStr,
-                            getGoogleMapsAnchor(partido.getUbicacion())
-                        );
-                        notificacionService.notificarPorMedio(msg, usuario);
-                    }
-                } else {
-                    int faltan = partido.getJugadoresParticipan().size() - partido.getConfirmaciones();
-                    for (Usuario usuario : partido.getJugadoresParticipan()) {
-                        String msg = String.format(
-                            "Hola %s! Faltan %d confirmaciones para confirmar el partido de %s.\nFecha y hora: %s\n%s",
-                            usuario.getNombre(),
-                            faltan,
-                            partido.getDeporte(),
-                            fechaStr,
-                            getGoogleMapsAnchor(partido.getUbicacion())
-                        );
-                        notificacionService.notificarPorMedio(msg, usuario);
-                    }
-                }
                 partidoRepository.save(partido);
             }
             else {
@@ -232,30 +187,19 @@ public class ControllerPartido {
             }
         }
     }
-    
+
     public void comenzarPartido(Long id, Usuario jugador, boolean overrideHorario) {
         Partido partido = getPartidoPorID(id);
+        partido.resetObservers(java.util.Collections.singletonList(notificador));
         if (partido != null) {
             EstadoPartido estadoActual = partido.getEstado();
             if (partido.esCreador(jugador)) {
                 if (overrideHorario && estadoActual instanceof com.tpo.armarPartido.service.estados.Confirmacion) {
-                    partido.cambiarEstado(new com.tpo.armarPartido.service.estados.EnJuego());
+                    partido.cambiarEstado(new EnJuego()); // Notifica via Observer
                     System.out.println("El partido ha comenzado (override horario).");
                 } else {
-                    estadoActual.comenzar(partido);
+                    estadoActual.comenzar(partido); // Notifica via Observer
                     estadoActual.getMessage(partido);
-                }
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-                String fechaStr = partido.getHorario() != null ? new java.sql.Timestamp(partido.getHorario().getTime()).toLocalDateTime().format(formatter) : "fecha no especificada";
-                String msg = String.format(
-                    "Hola %s! El partido de %s ha comenzado!\nFecha y hora: %s\n%s\n¡Mucha suerte!",
-                    jugador.getNombre(),
-                    partido.getDeporte(),
-                    fechaStr,
-                    getGoogleMapsAnchor(partido.getUbicacion())
-                );
-                for (Usuario usuario : partido.getJugadoresParticipan()) {
-                    notificacionService.notificarPorMedio(msg, usuario);
                 }
                 partidoRepository.save(partido);
             } else {
@@ -263,30 +207,19 @@ public class ControllerPartido {
             }
         }
     }
-    
+
     public void finalizarPartido(Long id, Usuario jugador, boolean overrideHorario) {
         Partido partido = getPartidoPorID(id);
+        partido.resetObservers(java.util.Collections.singletonList(notificador));
         if (partido != null) {
             EstadoPartido estadoActual = partido.getEstado();
             if (partido.esCreador(jugador)) {
                 if (overrideHorario && estadoActual instanceof com.tpo.armarPartido.service.estados.EnJuego) {
-                    partido.cambiarEstado(new com.tpo.armarPartido.service.estados.Finalizado());
+                    partido.cambiarEstado(new com.tpo.armarPartido.service.estados.Finalizado()); // Notifica via Observer
                     System.out.println("El partido ha finalizado (override horario).");
                 } else {
-                    estadoActual.finalizar(partido);
+                    estadoActual.finalizar(partido); // Notifica via Observer
                     estadoActual.getMessage(partido);
-                }
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-                String fechaStr = partido.getHorario() != null ? new java.sql.Timestamp(partido.getHorario().getTime()).toLocalDateTime().format(formatter) : "fecha no especificada";
-                String msg = String.format(
-                    "Hola %s! El partido de %s ha finalizado.\nFecha y hora: %s\n%s\n¡Gracias por participar!",
-                    jugador.getNombre(),
-                    partido.getDeporte(),
-                    fechaStr,
-                    getGoogleMapsAnchor(partido.getUbicacion())
-                );
-                for (Usuario usuario : partido.getJugadoresParticipan()) {
-                    notificacionService.notificarPorMedio(msg, usuario);
                 }
                 partidoRepository.save(partido);
             } else {
@@ -337,8 +270,8 @@ public class ControllerPartido {
 
     public List<Partido> filtrarPorNivel(Nivel nivel) {
         return partidoRepository.findAll().stream()
-            .filter(p -> p.getNivel().equals(nivel))
-            .collect(Collectors.toList());
+                .filter(p -> p.getNivel().equals(nivel))
+                .collect(Collectors.toList());
     }
 
     public List<Partido> filtrarPorUbicacion(double lat, double lng, int cantidad) {
@@ -354,10 +287,10 @@ public class ControllerPartido {
     }
 
     public List<PartidoDTO> buscarPartidos(
-        Nivel nivel,
-        Double lat,
-        Double lng,
-        Integer cantidad
+            Nivel nivel,
+            Double lat,
+            Double lng,
+            Integer cantidad
     ) {
         List<Partido> partidos;
 
@@ -376,7 +309,7 @@ public class ControllerPartido {
 
     public void crearPartido(PartidoDTO partidoDTO, String emparejamiento) {
         validarPartido(partidoDTO);
-        
+
         if (partidoDTO.getJugadoresParticipan() == null || partidoDTO.getJugadoresParticipan().isEmpty()) {
             return;
         }
@@ -391,7 +324,7 @@ public class ControllerPartido {
                 // No se maneja el error porque se asume que el usuario ya existe
             }
         }
-        Usuario usuarioCreador = jugadores.get(0); 
+        Usuario usuarioCreador = jugadores.get(0);
         // El primer usuario de la lista es considerado el creador del partido
         EstrategiaEmparejamiento estrategia;
         if (emparejamiento.equalsIgnoreCase("ubicacion")) {
@@ -403,15 +336,15 @@ public class ControllerPartido {
         }
         EstadoPartido estadoInicial = new NecesitamosJugadores();
         crearPartido(
-            partidoDTO.getDeporte(),
-            partidoDTO.getCantidadJugadores(),
-            partidoDTO.getDuracion(),
-            partidoDTO.getUbicacion(),
-            partidoDTO.getHorario(),
-            estrategia,
-            usuarioCreador,
-            partidoDTO.getNivel(),
-            jugadores
+                partidoDTO.getDeporte(),
+                partidoDTO.getCantidadJugadores(),
+                partidoDTO.getDuracion(),
+                partidoDTO.getUbicacion(),
+                partidoDTO.getHorario(),
+                estrategia,
+                usuarioCreador,
+                partidoDTO.getNivel(),
+                jugadores
         );
     }
 
@@ -420,10 +353,10 @@ public class ControllerPartido {
         if (partido != null) {
             // Eliminar notificaciones relacionadas primero
             notificacionRepository.deleteByPartido(id);
-            
+
             // Eliminar comentarios relacionados
             comentarioRepository.deleteByPartido(id);
-            
+
             // Finalmente eliminar el partido
             partidoRepository.delete(partido);
             System.out.println("Partido eliminado: " + partido.getId());
@@ -464,7 +397,7 @@ public class ControllerPartido {
     public void comenzar(Long id, UsuarioDTO usuarioDTO, boolean overrideHorario) {
         Usuario jugador = DTOMapper.toUsuario(usuarioDTO, "");
         Partido partido = getPartidoPorID(id);
-        
+
         if (partido != null && partido.getCreador() != null) {
             System.out.println("DEBUG: Partido ID=" + partido.getId() + ", Creador fetched from DB: ID=" + partido.getCreador().getId() + ", Nombre=" + partido.getCreador().getNombre());
         } else {
@@ -496,25 +429,7 @@ public class ControllerPartido {
         if (partido != null) {
             if (partido.esCreador(jugador)) {
                 EstadoPartido estadoActual = partido.getEstado();
-                estadoActual.cancelar(partido);
-                
-                // Enviar notificaciones a todos los participantes
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-                String fechaStr = partido.getHorario() != null ? 
-                    new java.sql.Timestamp(partido.getHorario().getTime()).toLocalDateTime().format(formatter) : 
-                    "fecha no especificada";
-                
-                for (Usuario usuario : partido.getJugadoresParticipan()) {
-                    String msg = String.format(
-                        "Hola %s! El partido de %s programado para el %s ha sido CANCELADO por el organizador.\n%s\nDisculpa las molestias.",
-                        usuario.getNombre(),
-                        partido.getDeporte(),
-                        fechaStr,
-                        getGoogleMapsAnchor(partido.getUbicacion())
-                    );
-                    notificacionService.notificarPorMedio(msg, usuario);
-                }
-                
+                estadoActual.cancelar(partido); // Esto notifica automáticamente via Observer
                 partidoRepository.save(partido);
                 System.out.println("Partido " + id + " cancelado por " + jugador.getNombre());
             } else {
@@ -554,11 +469,11 @@ public class ControllerPartido {
 
     public void crearPartido(Deporte deporte, int cantidadJugadores, int duracion, Ubicacion ubicacion, Date horario, EstrategiaEmparejamiento emparejamiento, Usuario usuarioCreador, Nivel nivel, List<Usuario> jugadoresParticipan) {
         List<iObserver> observadores = new ArrayList<>();
-        observadores.add(notificadorMail);
+        observadores.add(notificador);
         EstadoPartido estadoInicial = new NecesitamosJugadores();
         Partido nuevo = new Partido(deporte, cantidadJugadores, duracion, ubicacion, horario, estadoInicial, emparejamiento, jugadoresParticipan, nivel, observadores, usuarioCreador);
         partidoRepository.save(nuevo);
-        nuevo.cambiarEstado(estadoInicial);
+        nuevo.cambiarEstado(estadoInicial); // Esto notifica automáticamente via Observer
         if (emparejamiento instanceof EmparejamientoPorUbicacion) {
             nuevo.setEmparejamientoTipo("ubicacion");
         } else if (emparejamiento instanceof EmparejamientoPorNivel) {
